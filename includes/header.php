@@ -8,6 +8,9 @@
     <!-- Resource hints -->
     <link rel="preload" href="/assets/css/output.css" as="style">
     <link rel="preload" href="/font/HindSiliguri-Regular.ttf" as="font" type="font/ttf" crossorigin>
+    <?php if (!empty($lcpImageUrl)): ?>
+    <link rel="preload" href="<?= htmlspecialchars($lcpImageUrl) ?>" as="image">
+    <?php endif; ?>
 
     <!-- Local Compiled Tailwind CSS (Includes your fonts and custom styles) -->
     <link rel="stylesheet" href="/assets/css/output.css">

@@ -42,7 +42,7 @@ include 'includes/header.php';
     <?php if (count($categoryProducts) > 0): ?>
         <!-- Product Grid -->
         <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-            <?php foreach ($categoryProducts as $product): ?>
+            <?php $catIndex = 0; foreach ($categoryProducts as $product): ?>
                 <?php
                     $id = htmlspecialchars($product['id'] ?? '');
                     $name = htmlspecialchars($product['name'] ?? 'Unknown Product');
@@ -64,7 +64,7 @@ include 'includes/header.php';
                                 -<?php echo $discount_percentage; ?>%
                             </span>
                         <?php endif; ?>
-                        <img src="<?php echo $image_url; ?>" alt="<?php echo $name; ?>" loading="lazy" decoding="async" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                        <img src="<?php echo $image_url; ?>" alt="<?php echo $name; ?>" loading="<?php echo $catIndex < 4 ? 'eager' : 'lazy'; ?>" decoding="async" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
                     </a>
                     <div class="p-4 flex flex-col flex-grow">
                         <a href="product-details.php?id=<?php echo $id; ?>" class="text-sm font-medium text-gray-800 hover:text-[#c8102e] line-clamp-2 mb-2 flex-grow transition-colors">
@@ -86,7 +86,7 @@ include 'includes/header.php';
                         </div>
                     </div>
                 </div>
-            <?php endforeach; ?>
+            <?php $catIndex++; endforeach; ?>
         </div>
     <?php else: ?>
         <!-- Empty State -->

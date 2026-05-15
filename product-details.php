@@ -55,7 +55,7 @@ if (!$product) {
             <div class="w-full lg:w-[48%] flex flex-col gap-3">
                 
                 <!-- Main Image Container -->
-                <div class="relative bg-white border border-gray-100 rounded-lg overflow-hidden flex items-center justify-center p-2 group shadow-sm">
+                <div class="relative bg-white border border-gray-100 rounded-lg overflow-hidden flex items-center justify-center p-2 group shadow-sm aspect-square">
                     
                     <!-- Left Arrow -->
                     <button class="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-white rounded-full flex items-center justify-center text-[#cc0000] shadow-md z-10 hover:bg-gray-50 transition-colors opacity-80 group-hover:opacity-100">
@@ -67,7 +67,7 @@ if (!$product) {
                          alt="<?= htmlspecialchars($product['name']) ?>"
                          loading="eager"
                          decoding="async"
-                         class="w-full h-auto max-h-[450px] object-contain">
+                         class="w-full h-full object-contain">
 
                     <!-- Right Arrow -->
                     <button class="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-white rounded-full flex items-center justify-center text-[#cc0000] shadow-md z-10 hover:bg-gray-50 transition-colors opacity-80 group-hover:opacity-100">

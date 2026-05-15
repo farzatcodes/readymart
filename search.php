@@ -36,14 +36,14 @@ if ($searchQuery !== '') {
         <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
             
             <?php if (!empty($searchResults)): ?>
-                <?php foreach ($searchResults as $product): ?>
+                <?php $srchIndex = 0; foreach ($searchResults as $product): ?>
                     <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-xl hover:border-gray-200 transition-all duration-300 group flex flex-col transform hover:-translate-y-1">
                         
                         <div class="relative w-full pt-[100%] overflow-hidden bg-gray-50">
                             <a href="product-details.php?id=<?= htmlspecialchars($product['id']) ?>" class="absolute inset-0 p-2">
                                 <img src="<?= htmlspecialchars($product['image_url']) ?>"
                                      alt="<?= htmlspecialchars($product['name']) ?>"
-                                     loading="lazy"
+                                     loading="<?= $srchIndex < 4 ? 'eager' : 'lazy' ?>"
                                      decoding="async"
                                      class="w-full h-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-500">
                             </a>
@@ -85,7 +85,7 @@ if ($searchQuery !== '') {
                         </div>
                         
                     </div>
-                <?php endforeach; ?>
+                <?php $srchIndex++; endforeach; ?>
             <?php else: ?>
                 <div class="col-span-full py-16 bg-white rounded-xl border border-gray-100 text-center flex flex-col items-center justify-center shadow-sm">
                     <div class="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center text-gray-300 mb-4">

@@ -1,6 +1,4 @@
 <?php
-include_once 'includes/header.php';
-
 $jsonFile = 'products.json';
 $products = [];
 
@@ -8,6 +6,11 @@ if (file_exists($jsonFile)) {
     $jsonData = file_get_contents($jsonFile);
     $products = json_decode($jsonData, true) ?: [];
 }
+
+// Expose first product image for LCP preload hint in header
+$lcpImageUrl = !empty($products[0]['image_url']) ? $products[0]['image_url'] : null;
+
+include_once 'includes/header.php';
 ?>
 
 <main class="bg-[#f4f4f4] min-h-screen pb-12">

@@ -181,6 +181,29 @@
 
 <!-- Global Cart System JS -->
 <script>
+    function showToast(message) {
+        let container = document.getElementById('rm-toast-container');
+        if (!container) {
+            container = document.createElement('div');
+            container.id = 'rm-toast-container';
+            container.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none;max-width:calc(100vw - 48px);';
+            document.body.appendChild(container);
+        }
+        const toast = document.createElement('div');
+        toast.style.cssText = 'background:#111;color:#fff;padding:12px 18px;border-radius:8px;font-size:14px;font-weight:600;box-shadow:0 4px 12px rgba(0,0,0,0.3);opacity:0;transform:translateY(8px);transition:opacity 0.2s,transform 0.2s;pointer-events:auto;';
+        toast.textContent = message;
+        container.appendChild(toast);
+        requestAnimationFrame(() => {
+            toast.style.opacity = '1';
+            toast.style.transform = 'translateY(0)';
+        });
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateY(8px)';
+            setTimeout(() => toast.remove(), 200);
+        }, 2500);
+    }
+
     function getCart() {
         return JSON.parse(localStorage.getItem('readymart_cart')) || [];
     }
@@ -193,19 +216,19 @@
     function addToCart(id, name, price, image, qty = 1, redirect = false) {
         let cart = getCart();
         let existing = cart.find(item => item.id === id);
-        
+
         if (existing) {
             existing.qty += qty;
         } else {
             cart.push({ id, name, price, image, qty });
         }
-        
+
         saveCart(cart);
-        
+
         if (redirect) {
             window.location.href = 'checkout.php';
         } else {
-            alert('Item successfully added to your cart!');
+            showToast('Item successfully added to your cart!');
         }
     }
 
@@ -213,20 +236,19 @@
         let cart = getCart();
         let count = 0;
         let total = 0;
-        
+
         cart.forEach(item => {
             count += item.qty;
             total += item.price * item.qty;
         });
-        
-        const countEl = document.getElementById('header_cart_count');
-        const totalEl = document.getElementById('header_cart_total');
-        
+
+        const countEl = document.getElementById('headerCartCount');
+        const totalEl = document.getElementById('headerCartTotal');
+
         if (countEl) countEl.innerText = count;
-        if (totalEl) totalEl.innerText = total + ' TK';
+        if (totalEl) totalEl.innerText = total;
     }
 
-    // Initialize the header cart on page load
     document.addEventListener('DOMContentLoaded', updateHeaderCart);
 </script>
 
