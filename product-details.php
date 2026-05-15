@@ -63,8 +63,10 @@ if (!$product) {
                     </button>
                     
                     <!-- Main Image -->
-                    <img src="<?= htmlspecialchars($product['image_url']) ?>" 
-                         alt="<?= htmlspecialchars($product['name']) ?>" 
+                    <img src="<?= htmlspecialchars($product['image_url']) ?>"
+                         alt="<?= htmlspecialchars($product['name']) ?>"
+                         loading="eager"
+                         decoding="async"
                          class="w-full h-auto max-h-[450px] object-contain">
 
                     <!-- Right Arrow -->
@@ -78,7 +80,7 @@ if (!$product) {
                     <?php if (!empty($product['gallery']) && is_array($product['gallery'])): ?>
                         <?php foreach ($product['gallery'] as $index => $galleryImage): ?>
                             <div class="w-[70px] h-[70px] border <?= $index === 0 ? 'border-[#cc0000] border-2 shadow-sm' : 'border-gray-200 hover:border-[#cc0000]' ?> rounded overflow-hidden cursor-pointer p-0.5 transition-colors">
-                                <img src="<?= htmlspecialchars($galleryImage) ?>" alt="Thumbnail <?= $index + 1 ?>" class="w-full h-full object-contain <?= $index === 0 ? '' : 'opacity-70' ?>">
+                                <img src="<?= htmlspecialchars($galleryImage) ?>" alt="Thumbnail <?= $index + 1 ?>" loading="lazy" decoding="async" class="w-full h-full object-contain <?= $index === 0 ? '' : 'opacity-70' ?>">
                             </div>
                         <?php endforeach; ?>
                     <?php else: ?>
@@ -204,8 +206,10 @@ if (!$product) {
                         <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-xl hover:border-gray-200 transition-all duration-300 group flex flex-col transform hover:-translate-y-1">
                             <div class="relative w-full pt-[100%] overflow-hidden bg-gray-50">
                                 <a href="product-details.php?id=<?= htmlspecialchars($relatedProduct['id']) ?>" class="absolute inset-0 p-2">
-                                    <img src="<?= htmlspecialchars($relatedProduct['image_url']) ?>" 
-                                         alt="<?= htmlspecialchars($relatedProduct['name']) ?>" 
+                                    <img src="<?= htmlspecialchars($relatedProduct['image_url']) ?>"
+                                         alt="<?= htmlspecialchars($relatedProduct['name']) ?>"
+                                         loading="lazy"
+                                         decoding="async"
                                          class="w-full h-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-500">
                                 </a>
                                 

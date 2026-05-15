@@ -136,6 +136,49 @@
         </p>
     </div>
 </div>
+<!-- Service Worker Registration -->
+<script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js');
+        });
+    }
+</script>
+
+<!-- Core Web Vitals Monitoring -->
+<script>
+    function sendVitalsToAnalytics(metric, value) {
+        // Replace with your analytics endpoint
+        if (navigator.sendBeacon) {
+            navigator.sendBeacon('/api/vitals', JSON.stringify({ metric, value, ts: Date.now(), url: location.pathname }));
+        }
+    }
+
+    // LCP
+    new PerformanceObserver((list) => {
+        const entries = list.getEntries();
+        const last = entries[entries.length - 1];
+        sendVitalsToAnalytics('LCP', Math.round(last.startTime));
+    }).observe({ type: 'largest-contentful-paint', buffered: true });
+
+    // CLS
+    let cumulativeCLS = 0;
+    new PerformanceObserver((list) => {
+        for (const entry of list.getEntries()) {
+            if (!entry.hadRecentInput) cumulativeCLS += entry.value;
+        }
+        sendVitalsToAnalytics('CLS', Math.round(cumulativeCLS * 1000) / 1000);
+    }).observe({ type: 'layout-shift', buffered: true });
+
+    // INP (Interaction to Next Paint)
+    new PerformanceObserver((list) => {
+        for (const entry of list.getEntries()) {
+            const inp = entry.processingEnd - entry.processingStart;
+            sendVitalsToAnalytics('INP', Math.round(inp));
+        }
+    }).observe({ type: 'event', buffered: true, durationThreshold: 40 });
+</script>
+
 <!-- Global Cart System JS -->
 <script>
     function getCart() {

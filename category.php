@@ -64,7 +64,7 @@ include 'includes/header.php';
                                 -<?php echo $discount_percentage; ?>%
                             </span>
                         <?php endif; ?>
-                        <img src="<?php echo $image_url; ?>" alt="<?php echo $name; ?>" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                        <img src="<?php echo $image_url; ?>" alt="<?php echo $name; ?>" loading="lazy" decoding="async" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
                     </a>
                     <div class="p-4 flex flex-col flex-grow">
                         <a href="product-details.php?id=<?php echo $id; ?>" class="text-sm font-medium text-gray-800 hover:text-[#c8102e] line-clamp-2 mb-2 flex-grow transition-colors">
