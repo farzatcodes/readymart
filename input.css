@@ -1,0 +1,77 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+    font-family: 'Kalpurush';
+    src: url('../../font/kalpurush.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'SolaimanLipi';
+    src: url('../../font/SolaimanLipi.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Hind Siliguri';
+    src: url('../../font/HindSiliguri-Regular.ttf') format('truetype');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Hind Siliguri';
+    src: url('../../font/HindSiliguri-Bold.ttf') format('truetype');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+
+/* 2. Custom Site Styles */
+.search-input:focus {
+    outline: none;
+    border-color: #cc0000;
+    box-shadow: 0 0 0 2px rgba(204, 0, 0, 0.1);
+}
+
+.bengali-text {
+    font-family: 'Kalpurush', 'SolaimanLipi', 'Hind Siliguri', sans-serif;
+}
+
+.nav-link:hover {
+    opacity: 0.8;
+    transition: opacity 0.2s;
+}
+
+/* Hide scrollbar */
+.scrollbar-hide::-webkit-scrollbar {
+    display: none;
+}
+.scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+/* Animations */
+@keyframes ticker {
+    0% { transform: translateX(100%); }
+    100% { transform: translateX(-100%); }
+}
+
+@keyframes slideLeft { 
+    0% { transform: translateX(100%); } 
+    100% { transform: translateX(-100%); } 
+}
+
+.animate-ticker { 
+    display: inline-block; 
+    white-space: nowrap; 
+    animation: slideLeft 15s linear infinite; 
+}

@@ -1,0 +1,19 @@
+<IfModule LiteSpeed>
+    # Enable the cache engine
+    CacheEnable public
+    RewriteEngine On
+    
+    # EXCLUSIONS (CRITICAL)
+    # Never cache the Admin panel, cart, checkout forms, or payment processors
+    RewriteCond %{REQUEST_URI} ^/admin/ [NC,OR]
+    RewriteCond %{REQUEST_URI} ^/cart\.php [NC,OR]
+    RewriteCond %{REQUEST_URI} ^/checkout\.php [NC,OR]
+    RewriteCond %{REQUEST_URI} ^/process_checkout\.php [NC,OR]
+    RewriteCond %{REQUEST_URI} ^/checkout_success\.php [NC]
+    RewriteRule .* - [E=Cache-Control:no-cache,L]
+    
+    # INCLUSIONS
+    # Cache all other standard GET requests (like index, product details, category) for 10 minutes (600 seconds)
+    RewriteCond %{REQUEST_METHOD} ^GET|HEAD$
+    RewriteRule .* - [E=Cache-Control:max-age=600]
+</IfModule>

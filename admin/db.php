@@ -1,0 +1,38 @@
+<?php
+$host = 'localhost';
+$user = 'uzsiqspbxs_rmbd'; // Default XAMPP/WAMP user
+$pass = '#Yeshifu251';     // Default XAMPP/WAMP password
+$db   = 'uzsiqspbxs_rmbd';
+
+try {
+    // Connect to MySQL server without specifying a database first
+    $pdo = new PDO("mysql:host=$host", $user, $pass);
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    
+    // Auto-create database if it doesn't exist
+    $pdo->exec("CREATE DATABASE IF NOT EXISTS `$db`");
+    $pdo->exec("USE `$db`");
+
+    // Auto-create the admins table
+    $tableQuery = "CREATE TABLE IF NOT EXISTS `admins` (
+        `id` INT AUTO_INCREMENT PRIMARY KEY,
+        `username` VARCHAR(50) UNIQUE NOT NULL,
+        `password` VARCHAR(255) NOT NULL,
+        `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )";
+    $pdo->exec($tableQuery);
+
+    // Create default admin user if the table is empty
+    $stmt = $pdo->query("SELECT COUNT(*) FROM `admins`");
+    if ($stmt->fetchColumn() == 0) {
+        $defaultUser = 'admin';
+        $defaultPass = password_hash('admin123', PASSWORD_DEFAULT);
+        
+        $insertStmt = $pdo->prepare("INSERT INTO `admins` (`username`, `password`) VALUES (?, ?)");
+        $insertStmt->execute([$defaultUser, $defaultPass]);
+    }
+
+} catch(PDOException $e) {
+    die("<div style='color:red; padding:20px; font-family:sans-serif;'><strong>Database Connection Failed:</strong> Please ensure your MySQL server (like XAMPP/WAMP) is running. Error details: " . $e->getMessage() . "</div>");
+}
+?>
