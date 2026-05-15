@@ -5,11 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ReadyMart - Trusted Online Shop</title>
     
+    <!-- Resource hints -->
+    <link rel="preload" href="/assets/css/output.css" as="style">
+    <link rel="preload" href="/font/HindSiliguri-Regular.ttf" as="font" type="font/ttf" crossorigin>
+
     <!-- Local Compiled Tailwind CSS (Includes your fonts and custom styles) -->
     <link rel="stylesheet" href="/assets/css/output.css">
-    
-    <!-- Local Font Awesome -->
-    <link rel="stylesheet" href="/assets/fontawesome/css/all.min.css">
+
+    <!-- Font Awesome: load non-blocking to avoid render delay -->
+    <link rel="preload" href="/assets/fontawesome/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="/assets/fontawesome/css/all.min.css"></noscript>
 </head>
 <body class="bg-white">
 

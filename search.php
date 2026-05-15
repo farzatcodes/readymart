@@ -41,8 +41,10 @@ if ($searchQuery !== '') {
                         
                         <div class="relative w-full pt-[100%] overflow-hidden bg-gray-50">
                             <a href="product-details.php?id=<?= htmlspecialchars($product['id']) ?>" class="absolute inset-0 p-2">
-                                <img src="<?= htmlspecialchars($product['image_url']) ?>" 
-                                     alt="<?= htmlspecialchars($product['name']) ?>" 
+                                <img src="<?= htmlspecialchars($product['image_url']) ?>"
+                                     alt="<?= htmlspecialchars($product['name']) ?>"
+                                     loading="lazy"
+                                     decoding="async"
                                      class="w-full h-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-500">
                             </a>
                             
