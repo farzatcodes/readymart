@@ -1,4 +1,8 @@
-<?php include_once 'includes/header.php'; ?>
+<?php
+$settingsFile = __DIR__ . '/settings.json';
+$siteSettings = file_exists($settingsFile) ? json_decode(file_get_contents($settingsFile), true) ?? [] : [];
+include_once 'includes/header.php';
+?>
 
 <main class="bg-[#f0f2f5] min-h-[60vh] flex items-center justify-center py-12">
     <div class="bg-white p-8 rounded-xl shadow-sm max-w-md w-full text-center border border-gray-200">
@@ -23,5 +27,10 @@
     // Empty the user's local storage cart now that the order has been placed successfully
     localStorage.removeItem('readymart_cart');
 </script>
+
+<?php if (!empty($siteSettings['pixel_purchase'])): ?>
+<!-- @purchase pixel -->
+<?php echo $siteSettings['pixel_purchase']; ?>
+<?php endif; ?>
 
 <?php include_once 'includes/footer.php'; ?>
