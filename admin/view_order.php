@@ -35,6 +35,9 @@ if (!$order) {
 <div class="mb-4 flex items-center gap-3">
     <a href="orders.php" class="text-[#2271b1] hover:underline text-sm">&larr; Back</a>
     <h1 class="text-2xl font-normal text-[#1d2327]">Order Details: #<?= htmlspecialchars($order['id']) ?></h1>
+    <?php if(($order['source'] ?? '') === 'landing_page'): ?>
+        <span class="text-xs font-bold bg-blue-100 text-blue-700 px-2 py-1 rounded-full border border-blue-200">Landing Page</span>
+    <?php endif; ?>
 </div>
 
 <?php if(isset($success)): ?>

@@ -31,6 +31,10 @@ foreach ($products as $prod) {
 
 $themeColor = htmlspecialchars($pageConfig['theme_color'] ?? '#d0021b');
 $phone = htmlspecialchars($pageConfig['contact_phone'] ?? '01896070330');
+
+// 3. Load global settings (pixel codes)
+$settingsFile = __DIR__ . '/settings.json';
+$siteSettings = file_exists($settingsFile) ? json_decode(file_get_contents($settingsFile), true) ?? [] : [];
 ?>
 <!DOCTYPE html>
 <html lang="bn">
@@ -39,14 +43,30 @@ $phone = htmlspecialchars($pageConfig['contact_phone'] ?? '01896070330');
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo htmlspecialchars($pageConfig['page_title']); ?> - ReadyMart</title>
     
-    <!-- Local Compiled Tailwind CSS -->
-    <link rel="stylesheet" href="/assets/css/output.css">
-    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Hind Siliguri', 'Kalpurush', 'Arial', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
     <!-- Local Font Awesome -->
     <link rel="stylesheet" href="/assets/fontawesome/css/all.min.css">
-    
+
+    <?php if (!empty($siteSettings['pixel_head'])): ?>
+    <!-- @head pixel -->
+    <?php echo $siteSettings['pixel_head']; ?>
+    <?php endif; ?>
+
     <style>
-        body { font-family: 'Hind Siliguri', 'Kalpurush', sans-serif; background-color: #f3f4f6; }
+        body { background-color: #f3f4f6; }
         .theme-bg { background-color: <?php echo $themeColor; ?>; }
         .theme-text { color: <?php echo $themeColor; ?>; }
         .theme-border { border-color: <?php echo $themeColor; ?>; }
@@ -55,6 +75,11 @@ $phone = htmlspecialchars($pageConfig['contact_phone'] ?? '01896070330');
     </style>
 </head>
 <body class="text-gray-800 pb-12">
+
+    <?php if (!empty($siteSettings['pixel_body'])): ?>
+    <!-- @body pixel -->
+    <?php echo $siteSettings['pixel_body']; ?>
+    <?php endif; ?>
 
     <div class="max-w-3xl mx-auto bg-white shadow-2xl min-h-screen overflow-hidden">
         

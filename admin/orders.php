@@ -33,31 +33,36 @@ include 'includes/header.php';
                 <?php else: ?>
                     <?php foreach (array_reverse($orders) as $order): ?>
                         <tr class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                            <td class="p-4 font-bold text-gray-900">#<?php echo htmlspecialchars($order['id']); ?></td>
                             <td class="p-4">
-                                <div class="font-medium text-gray-800"><?php echo htmlspecialchars($order['customer_name']); ?></div>
-                                <div class="text-xs text-gray-500 mt-0.5"><i class="fas fa-phone-alt mr-1"></i><?php echo htmlspecialchars($order['phone']); ?></div>
+                                <div class="font-bold text-gray-900">#<?php echo htmlspecialchars($order['id']); ?></div>
+                                <?php if(($order['source'] ?? '') === 'landing_page'): ?>
+                                    <span class="text-[10px] font-bold bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full border border-blue-200">Landing Page</span>
+                                <?php endif; ?>
+                            </td>
+                            <td class="p-4">
+                                <div class="font-medium text-gray-800"><?php echo htmlspecialchars($order['customer']['name'] ?? ''); ?></div>
+                                <div class="text-xs text-gray-500 mt-0.5"><i class="fas fa-phone-alt mr-1"></i><?php echo htmlspecialchars($order['customer']['phone'] ?? ''); ?></div>
                             </td>
                             <td class="p-4 text-gray-600 text-sm">
-                                <?php echo date('M d, Y h:i A', strtotime($order['date'])); ?>
+                                <?php echo htmlspecialchars($order['date']); ?>
                             </td>
-                            <td class="p-4 font-bold text-gray-800">৳<?php echo number_format($order['total_amount'], 2); ?></td>
+                            <td class="p-4 font-bold text-gray-800">৳<?php echo number_format($order['total'] ?? 0, 2); ?></td>
                             <td class="p-4">
-                                <?php 
+                                <?php
                                     $statusColors = [
-                                        'pending' => 'bg-orange-100 text-orange-800 border border-orange-200',
-                                        'processing' => 'bg-blue-100 text-blue-800 border border-blue-200',
-                                        'completed' => 'bg-green-100 text-green-800 border border-green-200',
-                                        'cancelled' => 'bg-red-100 text-red-800 border border-red-200'
+                                        'Pending'    => 'bg-orange-100 text-orange-800 border border-orange-200',
+                                        'Processing' => 'bg-blue-100 text-blue-800 border border-blue-200',
+                                        'Completed'  => 'bg-green-100 text-green-800 border border-green-200',
+                                        'Cancelled'  => 'bg-red-100 text-red-800 border border-red-200'
                                     ];
                                     $color = $statusColors[$order['status']] ?? 'bg-gray-100 text-gray-800 border border-gray-200';
                                 ?>
                                 <span class="px-3 py-1.5 rounded text-xs font-bold uppercase shadow-sm <?php echo $color; ?>">
-                                    <?php echo $order['status']; ?>
+                                    <?php echo htmlspecialchars($order['status']); ?>
                                 </span>
                             </td>
                             <td class="p-4 text-right">
-                                <a href="view_order.php?id=<?php echo $order['id']; ?>" class="inline-block bg-gray-100 text-gray-700 hover:bg-[#c8102e] hover:text-white px-4 py-2 rounded shadow-sm transition-colors text-sm font-medium">
+                                <a href="view_order.php?id=<?php echo htmlspecialchars($order['id']); ?>" class="inline-block bg-gray-100 text-gray-700 hover:bg-[#c8102e] hover:text-white px-4 py-2 rounded shadow-sm transition-colors text-sm font-medium">
                                     View Details
                                 </a>
                             </td>

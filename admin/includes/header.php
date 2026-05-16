@@ -48,6 +48,11 @@ if (!isset($_SESSION['admin_logged_in'])) {
                         <i class="fas fa-rocket w-5 text-center text-blue-400"></i> Landing Pages
                     </a>
                 </li>
+                <li>
+                    <a href="settings.php" class="flex items-center gap-3 px-4 py-3 hover:bg-gray-800 transition-colors <?php echo basename($_SERVER['PHP_SELF']) === 'settings.php' ? 'bg-gray-800 border-l-4 border-red-500' : ''; ?>">
+                        <i class="fas fa-cog w-5 text-center text-gray-400"></i> Settings
+                    </a>
+                </li>
             </ul>
         </nav>
         <div class="p-4 bg-gray-950">
@@ -80,6 +85,7 @@ if (!isset($_SESSION['admin_logged_in'])) {
                     elseif($page == 'view_order.php') echo 'Order Details';
                     elseif($page == 'landing_pages.php') echo 'Landing Pages';
                     elseif($page == 'manage_landing.php') echo 'Landing Page Editor';
+                    elseif($page == 'settings.php') echo 'Settings';
                     else echo 'Admin Panel';
                 ?>
             </h2>
