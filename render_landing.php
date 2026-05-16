@@ -39,14 +39,25 @@ $phone = htmlspecialchars($pageConfig['contact_phone'] ?? '01896070330');
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo htmlspecialchars($pageConfig['page_title']); ?> - ReadyMart</title>
     
-    <!-- Local Compiled Tailwind CSS -->
-    <link rel="stylesheet" href="/assets/css/output.css">
-    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Hind Siliguri', 'Kalpurush', 'Arial', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
     <!-- Local Font Awesome -->
     <link rel="stylesheet" href="/assets/fontawesome/css/all.min.css">
     
     <style>
-        body { font-family: 'Hind Siliguri', 'Kalpurush', sans-serif; background-color: #f3f4f6; }
+        body { background-color: #f3f4f6; }
         .theme-bg { background-color: <?php echo $themeColor; ?>; }
         .theme-text { color: <?php echo $themeColor; ?>; }
         .theme-border { border-color: <?php echo $themeColor; ?>; }
