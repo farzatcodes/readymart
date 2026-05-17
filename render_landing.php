@@ -72,6 +72,7 @@ $siteSettings = file_exists($settingsFile) ? json_decode(file_get_contents($sett
         .theme-border { border-color: <?php echo $themeColor; ?>; }
         .theme-hover:hover { filter: brightness(90%); }
         .checkout-input:focus { border-color: <?php echo $themeColor; ?>; outline: none; box-shadow: 0 0 0 2px <?php echo $themeColor; ?>33; }
+        .pkg-selected { border-color: <?php echo $themeColor; ?>; background-color: <?php echo $themeColor; ?>0d; }
     </style>
 </head>
 <body class="text-gray-800 pb-12">
@@ -228,15 +229,67 @@ $siteSettings = file_exists($settingsFile) ? json_decode(file_get_contents($sett
                     <input type="hidden" name="cart_data" id="landing_cart_data">
                     <input type="hidden" name="payment_method" value="cod">
 
-                    <div class="mb-8 border border-red-100 bg-red-50/30 rounded-lg p-4">
+                    <?php
+                    $packages = $pageConfig['packages'] ?? [];
+                    $hasPackages = !empty($packages);
+                    ?>
+
+                    <!-- Package / Product selector -->
+                    <div class="mb-8">
                         <h3 class="font-bold text-gray-800 mb-3 border-b pb-2">যেকোনো একটি প্যাকেজ নির্বাচন করুন-</h3>
-                        <div class="flex items-center gap-4 bg-white p-3 rounded shadow-sm border border-red-200 relative overflow-hidden">
-                            <?php if(!empty($linkedProduct['old_price']) && $linkedProduct['old_price'] > $linkedProduct['price']): ?>
+
+                        <?php if($hasPackages): ?>
+                        <div class="space-y-3" id="pkg-list">
+                            <?php foreach($packages as $i => $pkg):
+                                $isFirst = ($i === 0);
+                            ?>
+                            <label class="pkg-card flex items-center gap-4 p-4 border-2 rounded-xl cursor-pointer transition-all select-none
+                                          <?php echo $isFirst ? 'pkg-selected' : 'border-gray-200 bg-white'; ?>"
+                                   onclick="selectPkg(<?= $i ?>)">
+                                <input type="radio" name="pkg_select" value="<?= $i ?>"
+                                       <?php echo $isFirst ? 'checked' : ''; ?>
+                                       class="sr-only">
+
+                                <!-- Custom radio dot -->
+                                <div class="pkg-dot w-6 h-6 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-all
+                                            <?php echo $isFirst ? 'theme-bg border-transparent' : 'border-gray-300 bg-white'; ?>">
+                                    <div class="w-2 h-2 rounded-full bg-white <?php echo $isFirst ? '' : 'opacity-0'; ?>"></div>
+                                </div>
+
+                                <img src="<?php echo htmlspecialchars($displayImage); ?>"
+                                     class="w-16 h-16 object-cover rounded-lg border border-gray-100 bg-gray-50 flex-shrink-0">
+
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex flex-wrap items-center gap-2">
+                                        <span class="font-bold text-gray-900"><?php echo htmlspecialchars($pkg['label']); ?></span>
+                                        <?php if(!empty($pkg['badge'])): ?>
+                                        <span class="text-[10px] font-black theme-bg text-white px-2 py-0.5 rounded-full leading-none">
+                                            <?php echo htmlspecialchars($pkg['badge']); ?>
+                                        </span>
+                                        <?php endif; ?>
+                                    </div>
+                                    <?php if((int)$pkg['quantity'] > 1): ?>
+                                    <p class="text-xs text-gray-400 mt-0.5">
+                                        প্রতি পিস ৳ <?php echo number_format((int)$pkg['price'] / (int)$pkg['quantity']); ?>
+                                    </p>
+                                    <?php endif; ?>
+                                </div>
+
+                                <div class="text-right flex-shrink-0">
+                                    <span class="text-xl font-black theme-text">৳ <?php echo number_format((int)$pkg['price']); ?></span>
+                                </div>
+                            </label>
+                            <?php endforeach; ?>
+                        </div>
+
+                        <?php else: ?>
+                        <!-- Fallback: no packages — show single product -->
+                        <div class="flex items-center gap-4 bg-white p-3 rounded-xl shadow-sm border border-red-200 relative overflow-hidden">
+                            <?php if(!empty($linkedProduct['old_price']) && (int)$linkedProduct['old_price'] > (int)$linkedProduct['price']): ?>
                                 <div class="absolute top-0 right-0 bg-red-500 text-white text-[10px] font-bold px-2 py-1 rounded-bl">
-                                    সেভ ৳ <?php echo ($linkedProduct['old_price'] - $linkedProduct['price']); ?>
+                                    সেভ ৳ <?php echo ((int)$linkedProduct['old_price'] - (int)$linkedProduct['price']); ?>
                                 </div>
                             <?php endif; ?>
-                            
                             <img src="<?php echo htmlspecialchars($displayImage); ?>" class="w-20 h-20 object-cover rounded border border-gray-100 bg-gray-50">
                             <div class="flex-1">
                                 <h4 class="font-bold text-gray-900 leading-tight"><?php echo htmlspecialchars($linkedProduct['name']); ?></h4>
@@ -248,6 +301,7 @@ $siteSettings = file_exists($settingsFile) ? json_decode(file_get_contents($sett
                                 </div>
                             </div>
                         </div>
+                        <?php endif; ?>
                     </div>
 
                     <div class="space-y-4 mb-8">
@@ -283,7 +337,7 @@ $siteSettings = file_exists($settingsFile) ? json_decode(file_get_contents($sett
                     <div class="bg-gray-50 p-5 rounded border border-gray-200 mb-6">
                         <div class="flex justify-between items-center mb-2 font-bold text-gray-600">
                             <span>Subtotal</span>
-                            <span>৳ <?php echo $linkedProduct['price']; ?></span>
+                            <span id="display_subtotal">৳ 0.00</span>
                         </div>
                         <div class="flex justify-between items-center mb-4 font-bold text-gray-600">
                             <span>Shipment</span>
@@ -337,26 +391,74 @@ $siteSettings = file_exists($settingsFile) ? json_decode(file_get_contents($sett
     </div>
 
     <script>
-        /* ── Order total ── */
+        /* ── Product defaults (fallback when no packages) ── */
+        const productId    = "<?php echo $linkedProduct['id']; ?>";
+        const productName  = "<?php echo addslashes($linkedProduct['name']); ?>";
         const productPrice = <?php echo (int)$linkedProduct['price']; ?>;
+        const productImage = "<?php echo addslashes($displayImage); ?>";
 
-        document.getElementById('landing_cart_data').value = JSON.stringify([{
-            id: "<?php echo $linkedProduct['id']; ?>",
-            name: "<?php echo addslashes($linkedProduct['name']); ?>",
-            price: productPrice,
-            image: "<?php echo addslashes($displayImage); ?>",
-            quantity: 1
-        }]);
+        /* ── Packages ── */
+        const packages = <?php echo json_encode(array_values($packages ?? [])); ?>;
+        let selectedPkgIdx = 0;
+
+        function selectPkg(idx) {
+            selectedPkgIdx = idx;
+
+            document.querySelectorAll('.pkg-card').forEach((card, i) => {
+                const dot     = card.querySelector('.pkg-dot');
+                const dotInner = dot.querySelector('div');
+                if (i === idx) {
+                    card.classList.add('pkg-selected');
+                    card.classList.remove('border-gray-200', 'bg-white');
+                    dot.classList.add('theme-bg', 'border-transparent');
+                    dot.classList.remove('border-gray-300', 'bg-white');
+                    dotInner.classList.remove('opacity-0');
+                } else {
+                    card.classList.remove('pkg-selected');
+                    card.classList.add('border-gray-200', 'bg-white');
+                    dot.classList.remove('theme-bg', 'border-transparent');
+                    dot.classList.add('border-gray-300', 'bg-white');
+                    dotInner.classList.add('opacity-0');
+                }
+                card.querySelector('input[type=radio]').checked = (i === idx);
+            });
+
+            updateTotal();
+        }
+
+        function getSubtotal() {
+            if (packages.length > 0) return packages[selectedPkgIdx].price;
+            return productPrice;
+        }
+
+        function buildCartData() {
+            if (packages.length > 0) {
+                const pkg = packages[selectedPkgIdx];
+                return [{
+                    id:       productId,
+                    name:     productName + (pkg.label ? ' (' + pkg.label + ')' : ''),
+                    price:    pkg.price,
+                    image:    productImage,
+                    quantity: pkg.quantity
+                }];
+            }
+            return [{ id: productId, name: productName, price: productPrice, image: productImage, quantity: 1 }];
+        }
 
         function updateTotal() {
             let shippingCost = 120;
             for (const radio of document.getElementsByName('delivery_zone')) {
                 if (radio.checked) { shippingCost = radio.value === 'inside_dhaka' ? 60 : 120; break; }
             }
-            const total = productPrice + shippingCost;
+            const subtotal = getSubtotal();
+            const total    = subtotal + shippingCost;
+
+            document.getElementById('display_subtotal').innerText = "৳ " + subtotal.toLocaleString('en-IN');
             document.getElementById('display_shipping').innerText = "৳ " + shippingCost.toFixed(2);
-            document.getElementById('display_total').innerText    = "৳ " + total.toFixed(2);
-            document.getElementById('btn_total').innerText        = " ৳ " + total.toFixed(2);
+            document.getElementById('display_total').innerText    = "৳ " + total.toLocaleString('en-IN');
+            document.getElementById('btn_total').innerText        = " ৳ " + total.toLocaleString('en-IN');
+
+            document.getElementById('landing_cart_data').value = JSON.stringify(buildCartData());
         }
 
         function scrollToCheckout() {
