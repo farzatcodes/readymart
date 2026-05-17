@@ -2,7 +2,6 @@
 $jsonFile = '../landing_pages.json';
 $landingPages = file_exists($jsonFile) ? json_decode(file_get_contents($jsonFile), true) ?? [] : [];
 
-// Fetch products for the dropdown
 $productsFile = '../products.json';
 $products = file_exists($productsFile) ? json_decode(file_get_contents($productsFile), true) ?? [] : [];
 
@@ -19,37 +18,54 @@ if ($pageId) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $id = $_POST['id'] ?: uniqid('lp_');
+    $id   = $_POST['id'] ?: uniqid('lp_');
     $slug = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $_POST['slug'])));
-    
-    // Prepare Data
+
     $newData = [
-        'id' => $id,
-        'slug' => $slug,
-        'page_title' => $_POST['page_title'],
-        'theme_color' => $_POST['theme_color'],
-        'product_id' => $_POST['product_id'],
-        'contact_phone' => $_POST['contact_phone'] ?? '',
-        'ticker_text' => $_POST['ticker_text'] ?? '',
+        'id'             => $id,
+        'slug'           => $slug,
+        'page_title'     => $_POST['page_title'],
+        'theme_color'    => $_POST['theme_color'],
+        'product_id'     => $_POST['product_id'],
+        'contact_phone'  => $_POST['contact_phone']  ?? '',
+        'ticker_text'    => $_POST['ticker_text']    ?? '',
         'top_subheading' => $_POST['top_subheading'] ?? '',
-        'hero_heading' => $_POST['hero_heading'] ?? '',
-        'hero_subheading' => $_POST['hero_subheading'] ?? '',
-        'offer_text' => $_POST['offer_text'] ?? '',
-        'features' => explode("\n", str_replace("\r", "", trim($_POST['features']))),
-        'hero_image' => $pageData['hero_image'] ?? ''
+        'hero_heading'   => $_POST['hero_heading']   ?? '',
+        'hero_subheading'=> $_POST['hero_subheading']?? '',
+        'offer_text'     => $_POST['offer_text']     ?? '',
+        'countdown_date' => $_POST['countdown_date'] ?? '',
+        'features'       => explode("\n", str_replace("\r", "", trim($_POST['features'] ?? ''))),
+        'hero_image'     => $pageData['hero_image']     ?? '',
+        'gallery_images' => $pageData['gallery_images'] ?? [],
     ];
 
-    // Handle Image Upload
+    $uploadDir = '../assets/landing/' . $slug . '/';
+    if (!file_exists($uploadDir)) {
+        mkdir($uploadDir, 0777, true);
+    }
+
+    // Hero image upload
     if (isset($_FILES['hero_image']) && $_FILES['hero_image']['error'] === UPLOAD_ERR_OK) {
-        $uploadDir = '../assets/landing/' . $slug . '/';
-        if (!file_exists($uploadDir)) {
-            mkdir($uploadDir, 0777, true);
-        }
-        $filename = 'hero_' . time() . '.' . pathinfo($_FILES['hero_image']['name'], PATHINFO_EXTENSION);
-        $targetFile = $uploadDir . $filename;
-        
-        if (move_uploaded_file($_FILES['hero_image']['tmp_name'], $targetFile)) {
+        $ext      = pathinfo($_FILES['hero_image']['name'], PATHINFO_EXTENSION);
+        $filename = 'hero_' . time() . '.' . $ext;
+        if (move_uploaded_file($_FILES['hero_image']['tmp_name'], $uploadDir . $filename)) {
             $newData['hero_image'] = '/assets/landing/' . $slug . '/' . $filename;
+        }
+    }
+
+    // Gallery images upload (multiple)
+    if (isset($_FILES['gallery_images']) && !empty($_FILES['gallery_images']['name'][0])) {
+        if (!empty($_POST['replace_gallery'])) {
+            $newData['gallery_images'] = [];
+        }
+        foreach ($_FILES['gallery_images']['tmp_name'] as $i => $tmpName) {
+            if ($_FILES['gallery_images']['error'][$i] === UPLOAD_ERR_OK) {
+                $ext      = pathinfo($_FILES['gallery_images']['name'][$i], PATHINFO_EXTENSION);
+                $filename = 'gallery_' . time() . '_' . $i . '.' . $ext;
+                if (move_uploaded_file($tmpName, $uploadDir . $filename)) {
+                    $newData['gallery_images'][] = '/assets/landing/' . $slug . '/' . $filename;
+                }
+            }
         }
     }
 
@@ -57,17 +73,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $updated = false;
     foreach ($landingPages as $key => $lp) {
         if ($lp['id'] === $id) {
+            if ($lp['slug'] !== $slug) {
+                $oldDir = '../landing/' . $lp['slug'];
+                if (is_dir($oldDir)) { @unlink($oldDir . '/index.php'); @rmdir($oldDir); }
+            }
             $landingPages[$key] = $newData;
             $updated = true;
-            
-            // If slug changed, delete old deployed folder
-            if($lp['slug'] !== $slug) {
-                $oldDir = '../landing/' . $lp['slug'];
-                if(is_dir($oldDir)) {
-                    @unlink($oldDir . '/index.php');
-                    @rmdir($oldDir);
-                }
-            }
             break;
         }
     }
@@ -76,12 +87,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     file_put_contents($jsonFile, json_encode($landingPages, JSON_PRETTY_PRINT));
 
-    // DEPLOY LOGIC: Create physical folder and index.php
+    // Deploy
     $deployDir = '../landing/' . $slug;
     if (!file_exists($deployDir)) {
         mkdir($deployDir, 0777, true);
     }
-    // This creates a file that just loads our central renderer, passing its slug!
     $indexContent = "<?php\n\$landing_slug = '" . $slug . "';\nrequire_once '../../render_landing.php';\n?>";
     file_put_contents($deployDir . '/index.php', $indexContent);
 
@@ -94,23 +104,25 @@ include 'includes/header.php';
 
 <div class="mb-6 flex items-center justify-between">
     <h1 class="text-2xl font-bold text-gray-800"><?php echo $pageData ? 'Edit Landing Page' : 'Create Landing Page'; ?></h1>
-    <a href="landing_pages.php" class="text-gray-500 hover:text-gray-700">Back to List</a>
+    <a href="landing_pages.php" class="text-gray-500 hover:text-gray-700 text-sm">&larr; Back to List</a>
 </div>
 
-<form action="manage_landing.php" method="POST" enctype="multipart/form-data" class="bg-white rounded-lg shadow max-w-5xl overflow-hidden">
+<form action="manage_landing.php" method="POST" enctype="multipart/form-data" class="space-y-6 max-w-5xl">
     <input type="hidden" name="id" value="<?php echo $pageData ? $pageData['id'] : ''; ?>">
-    
-    <!-- General Settings Section -->
-    <div class="p-6 border-b border-gray-200 bg-gray-50">
-        <h2 class="text-lg font-bold text-gray-800 mb-4 border-l-4 border-red-500 pl-3">1. General Settings</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+
+    <!-- 1. General Settings -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+        <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
+            <h2 class="font-bold text-gray-800 flex items-center gap-2"><span class="bg-red-500 text-white text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center">1</span> General Settings</h2>
+        </div>
+        <div class="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <div>
                 <label class="block text-sm font-bold text-gray-700 mb-1">Page Title (Browser Tab)</label>
-                <input type="text" name="page_title" required value="<?php echo $pageData ? htmlspecialchars($pageData['page_title']) : ''; ?>" class="w-full border-gray-300 rounded focus:border-red-500 focus:ring-red-500 p-2 border bg-white" placeholder="e.g. Digital Scale Offer">
+                <input type="text" name="page_title" required value="<?php echo $pageData ? htmlspecialchars($pageData['page_title']) : ''; ?>" class="w-full border border-gray-300 rounded p-2 focus:border-red-500 focus:outline-none" placeholder="e.g. Digital Scale Offer">
             </div>
             <div>
                 <label class="block text-sm font-bold text-gray-700 mb-1">URL Slug</label>
-                <input type="text" name="slug" required value="<?php echo $pageData ? htmlspecialchars($pageData['slug']) : ''; ?>" class="w-full border-gray-300 rounded focus:border-red-500 focus:ring-red-500 p-2 border bg-white" placeholder="e.g. digital-scale-offer">
+                <input type="text" name="slug" required value="<?php echo $pageData ? htmlspecialchars($pageData['slug']) : ''; ?>" class="w-full border border-gray-300 rounded p-2 focus:border-red-500 focus:outline-none" placeholder="e.g. digital-scale-offer">
             </div>
             <div>
                 <label class="block text-sm font-bold text-gray-700 mb-1">Theme Color</label>
@@ -121,7 +133,7 @@ include 'includes/header.php';
             </div>
             <div class="lg:col-span-2">
                 <label class="block text-sm font-bold text-gray-700 mb-1">Select Product</label>
-                <select name="product_id" required class="w-full border-gray-300 rounded focus:border-red-500 focus:ring-red-500 p-2 border bg-white">
+                <select name="product_id" required class="w-full border border-gray-300 rounded p-2 focus:border-red-500 focus:outline-none bg-white">
                     <option value="">-- Choose a Product --</option>
                     <?php foreach($products as $prod): ?>
                         <option value="<?php echo $prod['id']; ?>" <?php echo ($pageData && $pageData['product_id'] == $prod['id']) ? 'selected' : ''; ?>>
@@ -129,67 +141,109 @@ include 'includes/header.php';
                         </option>
                     <?php endforeach; ?>
                 </select>
-                <p class="text-xs text-gray-500 mt-1">This product's details and gallery will automatically load on the page.</p>
+                <p class="text-xs text-gray-500 mt-1">Product details (price, image) load automatically on the page.</p>
             </div>
             <div>
                 <label class="block text-sm font-bold text-gray-700 mb-1">Contact Phone</label>
-                <input type="text" name="contact_phone" value="<?php echo $pageData ? htmlspecialchars($pageData['contact_phone'] ?? '') : '01896070330'; ?>" class="w-full border-gray-300 rounded focus:border-red-500 focus:ring-red-500 p-2 border bg-white">
+                <input type="text" name="contact_phone" value="<?php echo $pageData ? htmlspecialchars($pageData['contact_phone'] ?? '') : '01896070330'; ?>" class="w-full border border-gray-300 rounded p-2 focus:border-red-500 focus:outline-none">
             </div>
         </div>
     </div>
 
-    <!-- Page Content Section -->
-    <div class="p-6">
-        <h2 class="text-lg font-bold text-gray-800 mb-4 border-l-4 border-red-500 pl-3">2. Page Content & Copy</h2>
-        
-        <div class="space-y-5">
-            <div>
-                <label class="block text-sm font-bold text-gray-700 mb-1">Top Ticker Text (e.g. ধামাকা অফার! আর মাত্র ১ দিন বাকি 🎁)</label>
-                <input type="text" name="ticker_text" value="<?php echo $pageData ? htmlspecialchars($pageData['ticker_text'] ?? '') : '🔥ধামাকা অফার! আর মাত্র ১ দিন বাকি 🎁'; ?>" class="w-full border-gray-300 rounded p-2 border focus:border-red-500">
-            </div>
+    <!-- 2. Page Content -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+        <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
+            <h2 class="font-bold text-gray-800 flex items-center gap-2"><span class="bg-red-500 text-white text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center">2</span> Page Content &amp; Copy</h2>
+        </div>
+        <div class="p-6 space-y-5">
 
-            <div>
-                <label class="block text-sm font-bold text-gray-700 mb-1">Top Subheading (e.g. 🌙এবার ঈদে অস্থির অফার🔥)</label>
-                <input type="text" name="top_subheading" value="<?php echo $pageData ? htmlspecialchars($pageData['top_subheading'] ?? '') : '🌙এবার ঈদে অস্থির অফার🔥'; ?>" class="w-full border-gray-300 rounded p-2 border focus:border-red-500">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">Top Ticker Text</label>
+                    <input type="text" name="ticker_text" value="<?php echo $pageData ? htmlspecialchars($pageData['ticker_text'] ?? '') : ''; ?>" class="w-full border border-gray-300 rounded p-2 focus:border-red-500 focus:outline-none" placeholder="e.g. Offer ends soon!">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">Top Subheading</label>
+                    <input type="text" name="top_subheading" value="<?php echo $pageData ? htmlspecialchars($pageData['top_subheading'] ?? '') : ''; ?>" class="w-full border border-gray-300 rounded p-2 focus:border-red-500 focus:outline-none" placeholder="e.g. Special Eid Offer">
+                </div>
             </div>
 
             <div>
                 <label class="block text-sm font-bold text-gray-700 mb-1">Main Hero Heading (Large Text)</label>
-                <textarea name="hero_heading" rows="2" class="w-full border-gray-300 rounded p-2 border focus:border-red-500" placeholder="কোরবানির ঈদে মাংস মাপার ঝামেলা থেকে মুক্তি..."><?php echo $pageData ? htmlspecialchars($pageData['hero_heading'] ?? '') : ''; ?></textarea>
+                <textarea name="hero_heading" rows="2" class="w-full border border-gray-300 rounded p-2 focus:border-red-500 focus:outline-none" placeholder="Your big bold headline here..."><?php echo $pageData ? htmlspecialchars($pageData['hero_heading'] ?? '') : ''; ?></textarea>
             </div>
 
             <div>
-                <label class="block text-sm font-bold text-gray-700 mb-1">Hero Subheading (Smaller text under heading)</label>
-                <textarea name="hero_subheading" rows="2" class="w-full border-gray-300 rounded p-2 border focus:border-red-500" placeholder="🔥 মাছ, মাংস থেকে শুরু করে..."><?php echo $pageData ? htmlspecialchars($pageData['hero_subheading'] ?? '') : ''; ?></textarea>
+                <label class="block text-sm font-bold text-gray-700 mb-1">Hero Subheading</label>
+                <textarea name="hero_subheading" rows="2" class="w-full border border-gray-300 rounded p-2 focus:border-red-500 focus:outline-none" placeholder="Smaller supporting text under the heading..."><?php echo $pageData ? htmlspecialchars($pageData['hero_subheading'] ?? '') : ''; ?></textarea>
             </div>
 
-            <div>
-                <label class="block text-sm font-bold text-gray-700 mb-1">Offer Highlight Text</label>
-                <input type="text" name="offer_text" value="<?php echo $pageData ? htmlspecialchars($pageData['offer_text'] ?? '') : '🔥অবিশ্বাস্য মূল্যছাড়‼ এবং ক্যাশ-অন ডেলিভারি অফার !'; ?>" class="w-full border-gray-300 rounded p-2 border focus:border-red-500">
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-1">Key Features / Benefits (One per line)</label>
-                    <textarea name="features" rows="6" class="w-full border-gray-300 rounded p-2 border focus:border-red-500" placeholder="LCD ডিসপ্লে&#10;সহজে বহনযোগ্য&#10;সর্বনিম্ন 10 গ্রাম হতে 50 কেজি পর্যন্ত ওজন মাপা যায়"><?php echo $pageData ? htmlspecialchars(implode("\n", $pageData['features'] ?? [])) : ''; ?></textarea>
-                    <p class="text-xs text-gray-500 mt-1">These will appear with green checkmarks (✅) automatically.</p>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">Offer Highlight Text</label>
+                    <input type="text" name="offer_text" value="<?php echo $pageData ? htmlspecialchars($pageData['offer_text'] ?? '') : ''; ?>" class="w-full border border-gray-300 rounded p-2 focus:border-red-500 focus:outline-none" placeholder="e.g. Unbelievable discount! Cash on delivery available">
+                    <p class="text-xs text-gray-500 mt-1">Shown inside the red offer box. Leave blank to hide it.</p>
                 </div>
-                
-                <div class="bg-gray-50 p-4 border border-gray-200 rounded">
-                    <label class="block text-sm font-bold text-gray-700 mb-2">Custom Hero Image (Optional)</label>
-                    <?php if($pageData && !empty($pageData['hero_image'])): ?>
-                        <img src="..<?php echo $pageData['hero_image']; ?>" class="h-32 object-contain mb-3 bg-white rounded shadow-sm border p-1">
-                    <?php endif; ?>
-                    <input type="file" name="hero_image" accept="image/*" class="w-full text-sm bg-white p-2 border rounded">
-                    <p class="text-xs text-gray-500 mt-2">If left blank, the product's default image will be used.</p>
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">Countdown End Date &amp; Time</label>
+                    <input type="datetime-local" name="countdown_date"
+                        value="<?php echo $pageData ? htmlspecialchars($pageData['countdown_date'] ?? '') : ''; ?>"
+                        class="w-full border border-gray-300 rounded p-2 focus:border-red-500 focus:outline-none bg-white">
+                    <p class="text-xs text-gray-500 mt-1">Live countdown timer in the offer box. Leave blank to hide timer.</p>
                 </div>
             </div>
+
         </div>
     </div>
 
-    <div class="p-6 bg-gray-50 border-t border-gray-200 flex justify-end">
-        <button type="submit" class="bg-blue-600 text-white px-8 py-3 rounded shadow hover:bg-blue-700 transition font-bold text-lg">
-            <i class="fas fa-rocket mr-2"></i> Save & Deploy Page
+    <!-- 3. Features & Media -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+        <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
+            <h2 class="font-bold text-gray-800 flex items-center gap-2"><span class="bg-red-500 text-white text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center">3</span> Features &amp; Media</h2>
+        </div>
+        <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-1">Key Features / Benefits <span class="font-normal text-gray-400">(one per line)</span></label>
+                <textarea name="features" rows="7" class="w-full border border-gray-300 rounded p-2 focus:border-red-500 focus:outline-none font-mono text-sm" placeholder="LCD Display&#10;Easy to carry&#10;Weighs from 10g to 50kg"><?php echo $pageData ? htmlspecialchars(implode("\n", $pageData['features'] ?? [])) : ''; ?></textarea>
+                <p class="text-xs text-gray-500 mt-1">Appear with green checkmarks on the landing page.</p>
+            </div>
+
+            <div class="space-y-4">
+                <div class="border border-gray-200 rounded-lg p-4">
+                    <label class="block text-sm font-bold text-gray-700 mb-2">Hero Image <span class="font-normal text-gray-400">(optional)</span></label>
+                    <?php if($pageData && !empty($pageData['hero_image'])): ?>
+                        <img src="..<?php echo htmlspecialchars($pageData['hero_image']); ?>" class="h-24 object-contain mb-2 bg-gray-50 rounded border p-1">
+                    <?php endif; ?>
+                    <input type="file" name="hero_image" accept="image/*" class="w-full text-sm p-2 border border-gray-200 rounded bg-gray-50">
+                    <p class="text-xs text-gray-500 mt-1">If blank, the product's default image is used.</p>
+                </div>
+
+                <div class="border border-gray-200 rounded-lg p-4">
+                    <label class="block text-sm font-bold text-gray-700 mb-2">Gallery / Review Screenshots</label>
+                    <?php if(!empty($pageData['gallery_images'])): ?>
+                        <div class="flex flex-wrap gap-2 mb-3">
+                            <?php foreach($pageData['gallery_images'] as $gi): ?>
+                                <img src="..<?php echo htmlspecialchars($gi); ?>" class="h-16 w-16 object-cover rounded border bg-white">
+                            <?php endforeach; ?>
+                        </div>
+                        <label class="flex items-center gap-2 text-xs text-red-600 font-bold mb-2 cursor-pointer">
+                            <input type="checkbox" name="replace_gallery" value="1" class="w-4 h-4">
+                            Replace all existing gallery images
+                        </label>
+                    <?php endif; ?>
+                    <input type="file" name="gallery_images[]" accept="image/*" multiple class="w-full text-sm p-2 border border-gray-200 rounded bg-gray-50">
+                    <p class="text-xs text-gray-500 mt-1">Select multiple images. Displayed as a swipeable carousel on the page.</p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Submit -->
+    <div class="flex justify-end pb-6">
+        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg shadow font-bold text-base transition flex items-center gap-2">
+            <i class="fas fa-rocket"></i> Save &amp; Deploy Page
         </button>
     </div>
 </form>

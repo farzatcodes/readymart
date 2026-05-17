@@ -131,16 +131,20 @@ $siteSettings = file_exists($settingsFile) ? json_decode(file_get_contents($sett
 
             <!-- Highlight Offer Box -->
             <?php if(!empty($pageConfig['offer_text'])): ?>
+            <?php $hasCountdown = !empty($pageConfig['countdown_date']); ?>
             <div class="bg-red-50 border border-red-200 rounded-lg p-5 text-center mb-10 shadow-sm">
                 <h3 class="text-red-600 font-bold text-xl md:text-2xl leading-snug">
                     <?php echo htmlspecialchars($pageConfig['offer_text']); ?>
                 </h3>
-                <div class="mt-4 flex justify-center gap-4 text-center">
-                    <div class="bg-white px-3 py-2 rounded border border-red-100 shadow-sm"><span class="block text-2xl font-black theme-text">01</span><span class="text-xs font-bold">Days</span></div>
-                    <div class="bg-white px-3 py-2 rounded border border-red-100 shadow-sm"><span class="block text-2xl font-black theme-text">12</span><span class="text-xs font-bold">Hours</span></div>
-                    <div class="bg-white px-3 py-2 rounded border border-red-100 shadow-sm"><span class="block text-2xl font-black theme-text">45</span><span class="text-xs font-bold">Mins</span></div>
+                <?php if($hasCountdown): ?>
+                <div class="mt-4 flex justify-center gap-3 text-center" id="countdown-box">
+                    <div class="bg-white px-3 py-2 rounded border border-red-100 shadow-sm min-w-[52px]"><span class="block text-2xl font-black theme-text" id="cd-days">00</span><span class="text-xs font-bold text-gray-500">Days</span></div>
+                    <div class="bg-white px-3 py-2 rounded border border-red-100 shadow-sm min-w-[52px]"><span class="block text-2xl font-black theme-text" id="cd-hours">00</span><span class="text-xs font-bold text-gray-500">Hours</span></div>
+                    <div class="bg-white px-3 py-2 rounded border border-red-100 shadow-sm min-w-[52px]"><span class="block text-2xl font-black theme-text" id="cd-mins">00</span><span class="text-xs font-bold text-gray-500">Mins</span></div>
+                    <div class="bg-white px-3 py-2 rounded border border-red-100 shadow-sm min-w-[52px]"><span class="block text-2xl font-black theme-text" id="cd-secs">00</span><span class="text-xs font-bold text-gray-500">Secs</span></div>
                 </div>
-                <button onclick="scrollToCheckout()" class="mt-5 theme-bg text-white font-bold px-6 py-2 rounded shadow hover:bg-red-700 text-sm">
+                <?php endif; ?>
+                <button onclick="scrollToCheckout()" class="mt-5 theme-bg text-white font-bold px-6 py-2 rounded shadow theme-hover text-sm">
                     <i class="fas fa-shopping-cart"></i> অর্ডার করতে চাই
                 </button>
             </div>
@@ -171,21 +175,39 @@ $siteSettings = file_exists($settingsFile) ? json_decode(file_get_contents($sett
             </div>
             <?php endif; ?>
 
-            <!-- Product Gallery Carousel -->
-            <?php if(!empty($linkedProduct['gallery']) && count($linkedProduct['gallery']) > 0): ?>
+            <!-- Gallery / Review Screenshots Carousel -->
+            <?php $galleryImages = $pageConfig['gallery_images'] ?? []; ?>
+            <?php if(!empty($galleryImages)): ?>
             <div class="mb-12">
                 <h2 class="text-2xl font-bold mb-4 flex items-center gap-2">
-                    <span>📌</span> প্রোডাক্টের কিছু ছবি-
+                    <span>📸</span> রিভিউ ও প্রোডাক্টের ছবি-
                 </h2>
-                <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
-                    <?php foreach(array_slice($linkedProduct['gallery'], 0, 6) as $img): ?>
-                        <div class="aspect-square bg-gray-100 rounded overflow-hidden border border-gray-200">
-                            <img src="<?php echo htmlspecialchars($img); ?>" class="w-full h-full object-cover">
+                <div class="w-full h-1 bg-gray-100 mb-6 relative"><div class="absolute left-0 top-0 h-1 w-16 theme-bg"></div></div>
+
+                <?php if(count($galleryImages) === 1): ?>
+                    <img src="<?php echo htmlspecialchars($galleryImages[0]); ?>" class="w-full rounded-lg border border-gray-200 object-contain bg-gray-50 max-h-80">
+                <?php else: ?>
+                <!-- Carousel -->
+                <div class="relative rounded-lg overflow-hidden border border-gray-200 bg-gray-50 shadow-sm" id="lp-carousel">
+                    <div id="lp-track" class="flex transition-transform duration-500 ease-in-out">
+                        <?php foreach($galleryImages as $img): ?>
+                        <div class="min-w-full">
+                            <img src="<?php echo htmlspecialchars($img); ?>" class="w-full h-72 md:h-96 object-contain bg-gray-50">
                         </div>
-                    <?php endforeach; ?>
+                        <?php endforeach; ?>
+                    </div>
+
+                    <!-- Prev / Next -->
+                    <button onclick="lpSlide(-1)" class="absolute left-2 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white rounded-full w-9 h-9 flex items-center justify-center text-lg transition">&#8249;</button>
+                    <button onclick="lpSlide(1)"  class="absolute right-2 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white rounded-full w-9 h-9 flex items-center justify-center text-lg transition">&#8250;</button>
+
+                    <!-- Dot counter -->
+                    <div class="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5" id="lp-dots"></div>
                 </div>
+                <?php endif; ?>
+
                 <div class="text-center mt-6">
-                    <button onclick="scrollToCheckout()" class="theme-bg text-white font-bold px-8 py-3 rounded shadow-md hover:bg-red-700">
+                    <button onclick="scrollToCheckout()" class="theme-bg theme-hover text-white font-bold px-8 py-3 rounded shadow-md">
                         <i class="fas fa-shopping-cart"></i> অর্ডার করতে চাই
                     </button>
                 </div>
@@ -315,8 +337,9 @@ $siteSettings = file_exists($settingsFile) ? json_decode(file_get_contents($sett
     </div>
 
     <script>
-        const productPrice = <?php echo $linkedProduct['price']; ?>;
-        
+        /* ── Order total ── */
+        const productPrice = <?php echo (int)$linkedProduct['price']; ?>;
+
         document.getElementById('landing_cart_data').value = JSON.stringify([{
             id: "<?php echo $linkedProduct['id']; ?>",
             name: "<?php echo addslashes($linkedProduct['name']); ?>",
@@ -326,21 +349,14 @@ $siteSettings = file_exists($settingsFile) ? json_decode(file_get_contents($sett
         }]);
 
         function updateTotal() {
-            const shippingRadios = document.getElementsByName('delivery_zone');
             let shippingCost = 120;
-            
-            for (const radio of shippingRadios) {
-                if (radio.checked) {
-                    shippingCost = radio.value === 'inside_dhaka' ? 60 : 120;
-                    break;
-                }
+            for (const radio of document.getElementsByName('delivery_zone')) {
+                if (radio.checked) { shippingCost = radio.value === 'inside_dhaka' ? 60 : 120; break; }
             }
-
             const total = productPrice + shippingCost;
-            
             document.getElementById('display_shipping').innerText = "৳ " + shippingCost.toFixed(2);
-            document.getElementById('display_total').innerText = "৳ " + total.toFixed(2);
-            document.getElementById('btn_total').innerText = " ৳ " + total.toFixed(2);
+            document.getElementById('display_total').innerText    = "৳ " + total.toFixed(2);
+            document.getElementById('btn_total').innerText        = " ৳ " + total.toFixed(2);
         }
 
         function scrollToCheckout() {
@@ -349,6 +365,73 @@ $siteSettings = file_exists($settingsFile) ? json_decode(file_get_contents($sett
         }
 
         updateTotal();
+
+        /* ── Live countdown ── */
+        <?php if(!empty($pageConfig['countdown_date'])): ?>
+        (function() {
+            const endTime = new Date("<?php echo htmlspecialchars($pageConfig['countdown_date']); ?>").getTime();
+            function tick() {
+                const diff = endTime - Date.now();
+                if (diff <= 0) {
+                    ['cd-days','cd-hours','cd-mins','cd-secs'].forEach(id => {
+                        const el = document.getElementById(id); if (el) el.textContent = '00';
+                    });
+                    return;
+                }
+                const d = Math.floor(diff / 86400000);
+                const h = Math.floor((diff % 86400000) / 3600000);
+                const m = Math.floor((diff % 3600000)  / 60000);
+                const s = Math.floor((diff % 60000)    / 1000);
+                const pad = n => String(n).padStart(2,'0');
+                document.getElementById('cd-days').textContent  = pad(d);
+                document.getElementById('cd-hours').textContent = pad(h);
+                document.getElementById('cd-mins').textContent  = pad(m);
+                document.getElementById('cd-secs').textContent  = pad(s);
+            }
+            tick();
+            setInterval(tick, 1000);
+        })();
+        <?php endif; ?>
+
+        /* ── Gallery carousel ── */
+        <?php $galleryImages = $pageConfig['gallery_images'] ?? []; ?>
+        <?php if(count($galleryImages) > 1): ?>
+        (function() {
+            const track  = document.getElementById('lp-track');
+            const dotsEl = document.getElementById('lp-dots');
+            const total  = <?php echo count($galleryImages); ?>;
+            let cur = 0;
+
+            // Build dots
+            for (let i = 0; i < total; i++) {
+                const d = document.createElement('button');
+                d.className = 'w-2 h-2 rounded-full transition-all ' + (i === 0 ? 'bg-white scale-125' : 'bg-white/50');
+                d.onclick = () => goTo(i);
+                dotsEl.appendChild(d);
+            }
+
+            function goTo(n) {
+                cur = (n + total) % total;
+                track.style.transform = 'translateX(-' + (cur * 100) + '%)';
+                dotsEl.querySelectorAll('button').forEach((d, i) => {
+                    d.className = 'w-2 h-2 rounded-full transition-all ' + (i === cur ? 'bg-white scale-125' : 'bg-white/50');
+                });
+            }
+
+            window.lpSlide = dir => goTo(cur + dir);
+
+            // Auto-advance every 4 seconds
+            setInterval(() => goTo(cur + 1), 4000);
+
+            // Touch swipe
+            let tx = 0;
+            track.addEventListener('touchstart', e => { tx = e.touches[0].clientX; }, {passive:true});
+            track.addEventListener('touchend',   e => {
+                const dx = e.changedTouches[0].clientX - tx;
+                if (Math.abs(dx) > 40) goTo(cur + (dx < 0 ? 1 : -1));
+            }, {passive:true});
+        })();
+        <?php endif; ?>
     </script>
 </body>
 </html>
