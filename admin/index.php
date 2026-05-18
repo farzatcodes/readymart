@@ -35,18 +35,18 @@ include 'includes/header.php';
 ?>
 
 <!-- Page Header -->
-<div class="bg-gradient-to-r from-gray-900 to-gray-700 -mx-4 md:-mx-6 -mt-4 md:-mt-6 px-6 py-8 mb-8 text-white">
-    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+<div class="bg-gradient-to-r from-gray-900 to-gray-700 -mx-4 md:-mx-6 -mt-4 md:-mt-6 px-5 py-6 mb-6 text-white">
+    <div class="flex flex-col gap-4">
         <div>
-            <h1 class="text-2xl font-bold">Dashboard</h1>
-            <p class="text-gray-300 text-sm mt-1"><?php echo date('l, F j, Y'); ?> — Overview of your store activity</p>
+            <h1 class="text-xl font-bold">Dashboard</h1>
+            <p class="text-gray-300 text-xs mt-1"><?php echo date('l, F j, Y'); ?></p>
         </div>
-        <div class="flex gap-3">
-            <a href="add_product.php" class="bg-white text-gray-900 hover:bg-gray-100 text-sm font-bold px-4 py-2 rounded flex items-center gap-2 transition">
-                <i class="fas fa-plus"></i> Add Product
+        <div class="flex gap-2">
+            <a href="add_product.php" class="flex-1 md:flex-none bg-white text-gray-900 hover:bg-gray-100 active:bg-gray-200 text-sm font-bold px-4 py-2.5 rounded-lg flex items-center justify-center gap-2 transition">
+                <i class="fas fa-plus"></i> <span>Add Product</span>
             </a>
-            <a href="manage_landing.php" class="bg-red-600 hover:bg-red-700 text-white text-sm font-bold px-4 py-2 rounded flex items-center gap-2 transition">
-                <i class="fas fa-rocket"></i> New Landing Page
+            <a href="manage_landing.php" class="flex-1 md:flex-none bg-red-600 hover:bg-red-700 active:bg-red-800 text-white text-sm font-bold px-4 py-2.5 rounded-lg flex items-center justify-center gap-2 transition">
+                <i class="fas fa-rocket"></i> <span>New Landing</span>
             </a>
         </div>
     </div>
@@ -232,18 +232,27 @@ include 'includes/header.php';
 
 </div>
 
-<!-- Recent Orders Table -->
+<!-- Recent Orders -->
 <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-    <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+    <div class="px-5 py-4 border-b border-gray-200 flex justify-between items-center">
         <div>
             <h3 class="font-bold text-gray-800">Recent Orders</h3>
-            <p class="text-xs text-gray-500 mt-0.5">Last <?= count($recentOrders) ?> orders placed</p>
+            <p class="text-xs text-gray-500 mt-0.5">Last <?= count($recentOrders) ?> orders</p>
         </div>
         <a href="orders.php" class="text-sm text-red-600 hover:text-red-800 font-bold flex items-center gap-1">
             View All <i class="fas fa-arrow-right text-xs"></i>
         </a>
     </div>
-    <div class="overflow-x-auto">
+
+    <?php if(empty($recentOrders)): ?>
+    <div class="px-5 py-12 text-center text-gray-400">
+        <i class="fas fa-inbox text-4xl block mb-2 text-gray-200"></i>
+        No orders yet.
+    </div>
+    <?php else: ?>
+
+    <!-- Desktop table -->
+    <div class="hidden md:block overflow-x-auto">
         <table class="w-full text-left">
             <thead>
                 <tr class="border-b border-gray-100 text-xs uppercase text-gray-500 bg-gray-50">
@@ -256,53 +265,77 @@ include 'includes/header.php';
                 </tr>
             </thead>
             <tbody>
-                <?php if(empty($recentOrders)): ?>
-                    <tr>
-                        <td colspan="6" class="px-5 py-12 text-center text-gray-400">
-                            <i class="fas fa-inbox text-4xl block mb-2 text-gray-200"></i>
-                            No orders yet.
-                        </td>
-                    </tr>
-                <?php else: ?>
-                    <?php foreach($recentOrders as $order): ?>
-                    <?php
-                        $statusMap = [
-                            'Pending'    => 'bg-orange-100 text-orange-700',
-                            'Processing' => 'bg-blue-100 text-blue-700',
-                            'Completed'  => 'bg-green-100 text-green-700',
-                            'Cancelled'  => 'bg-red-100 text-red-700',
-                        ];
-                        $sc = $statusMap[$order['status'] ?? ''] ?? 'bg-gray-100 text-gray-700';
-                    ?>
-                    <tr class="border-b border-gray-50 hover:bg-gray-50 transition">
-                        <td class="px-5 py-3.5">
-                            <div class="font-bold text-gray-900 text-sm">#<?= htmlspecialchars($order['id']) ?></div>
-                            <?php if(($order['source'] ?? '') === 'landing_page'): ?>
-                                <span class="text-[10px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded-full border border-blue-100">Landing</span>
-                            <?php endif; ?>
-                        </td>
-                        <td class="px-5 py-3.5">
-                            <div class="text-sm font-medium text-gray-800"><?= htmlspecialchars($order['customer']['name'] ?? '—') ?></div>
-                            <div class="text-xs text-gray-400"><?= htmlspecialchars($order['customer']['phone'] ?? '') ?></div>
-                        </td>
-                        <td class="px-5 py-3.5 text-sm text-gray-500"><?= htmlspecialchars($order['date'] ?? '') ?></td>
-                        <td class="px-5 py-3.5 font-bold text-gray-900">৳<?= number_format($order['total'] ?? 0) ?></td>
-                        <td class="px-5 py-3.5">
-                            <span class="px-2.5 py-1 rounded-full text-xs font-bold <?= $sc ?>">
-                                <?= htmlspecialchars($order['status'] ?? '') ?>
-                            </span>
-                        </td>
-                        <td class="px-5 py-3.5 text-right">
-                            <a href="view_order.php?id=<?= htmlspecialchars($order['id']) ?>" class="text-xs font-bold text-gray-500 hover:text-red-600 transition">
-                                Details <i class="fas fa-chevron-right text-[10px]"></i>
-                            </a>
-                        </td>
-                    </tr>
-                    <?php endforeach; ?>
-                <?php endif; ?>
+                <?php foreach($recentOrders as $order):
+                    $statusMap = [
+                        'Pending'    => 'bg-orange-100 text-orange-700',
+                        'Processing' => 'bg-blue-100 text-blue-700',
+                        'Completed'  => 'bg-green-100 text-green-700',
+                        'Cancelled'  => 'bg-red-100 text-red-700',
+                    ];
+                    $sc = $statusMap[$order['status'] ?? ''] ?? 'bg-gray-100 text-gray-700';
+                ?>
+                <tr class="border-b border-gray-50 hover:bg-gray-50 transition">
+                    <td class="px-5 py-3.5">
+                        <div class="font-bold text-gray-900 text-sm">#<?= htmlspecialchars($order['id']) ?></div>
+                        <?php if(($order['source'] ?? '') === 'landing_page'): ?>
+                            <span class="text-[10px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded-full border border-blue-100">Landing</span>
+                        <?php endif; ?>
+                    </td>
+                    <td class="px-5 py-3.5">
+                        <div class="text-sm font-medium text-gray-800"><?= htmlspecialchars($order['customer']['name'] ?? '—') ?></div>
+                        <div class="text-xs text-gray-400"><?= htmlspecialchars($order['customer']['phone'] ?? '') ?></div>
+                    </td>
+                    <td class="px-5 py-3.5 text-sm text-gray-500"><?= htmlspecialchars($order['date'] ?? '') ?></td>
+                    <td class="px-5 py-3.5 font-bold text-gray-900">৳<?= number_format($order['total'] ?? 0) ?></td>
+                    <td class="px-5 py-3.5">
+                        <span class="px-2.5 py-1 rounded-full text-xs font-bold <?= $sc ?>"><?= htmlspecialchars($order['status'] ?? '') ?></span>
+                    </td>
+                    <td class="px-5 py-3.5 text-right">
+                        <a href="view_order.php?id=<?= htmlspecialchars($order['id']) ?>" class="text-xs font-bold text-gray-500 hover:text-red-600 transition">
+                            Details <i class="fas fa-chevron-right text-[10px]"></i>
+                        </a>
+                    </td>
+                </tr>
+                <?php endforeach; ?>
             </tbody>
         </table>
     </div>
+
+    <!-- Mobile card list -->
+    <div class="md:hidden divide-y divide-gray-100">
+        <?php foreach($recentOrders as $order):
+            $statusMap = [
+                'Pending'    => 'bg-orange-100 text-orange-700',
+                'Processing' => 'bg-blue-100 text-blue-700',
+                'Completed'  => 'bg-green-100 text-green-700',
+                'Cancelled'  => 'bg-red-100 text-red-700',
+            ];
+            $sc = $statusMap[$order['status'] ?? ''] ?? 'bg-gray-100 text-gray-700';
+        ?>
+        <a href="view_order.php?id=<?= htmlspecialchars($order['id']) ?>"
+           class="flex items-center gap-3 px-4 py-3.5 hover:bg-gray-50 active:bg-gray-100 transition">
+            <div class="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 text-gray-400">
+                <i class="fas fa-box text-sm"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2">
+                    <span class="font-bold text-gray-900 text-sm">#<?= htmlspecialchars($order['id']) ?></span>
+                    <?php if(($order['source'] ?? '') === 'landing_page'): ?>
+                        <span class="text-[10px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded-full">LP</span>
+                    <?php endif; ?>
+                </div>
+                <div class="text-xs text-gray-500 truncate mt-0.5"><?= htmlspecialchars($order['customer']['name'] ?? '—') ?> · <?= htmlspecialchars($order['date'] ?? '') ?></div>
+            </div>
+            <div class="flex-shrink-0 text-right">
+                <div class="font-bold text-gray-900 text-sm">৳<?= number_format($order['total'] ?? 0) ?></div>
+                <span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full <?= $sc ?>"><?= htmlspecialchars($order['status'] ?? '') ?></span>
+            </div>
+            <i class="fas fa-chevron-right text-gray-300 text-xs flex-shrink-0"></i>
+        </a>
+        <?php endforeach; ?>
+    </div>
+
+    <?php endif; ?>
 </div>
 
 <?php include 'includes/footer.php'; ?>
