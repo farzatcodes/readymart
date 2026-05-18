@@ -39,6 +39,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'gallery_images' => $pageData['gallery_images'] ?? [],
     ];
 
+    // Parse packages from parallel arrays
+    $packages = [];
+    foreach ($_POST['pkg_label'] ?? [] as $i => $label) {
+        if (trim($label) === '') continue;
+        $packages[] = [
+            'label'    => trim($label),
+            'quantity' => max(1, (int)($_POST['pkg_qty'][$i]   ?? 1)),
+            'price'    => max(0, (int)($_POST['pkg_price'][$i] ?? 0)),
+            'badge'    => trim($_POST['pkg_badge'][$i] ?? ''),
+        ];
+    }
+    $newData['packages'] = $packages;
+
     $uploadDir = '../assets/landing/' . $slug . '/';
     if (!file_exists($uploadDir)) {
         mkdir($uploadDir, 0777, true);
@@ -239,6 +252,101 @@ include 'includes/header.php';
 
         </div>
     </div>
+
+    <!-- 4. Packages -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+        <div class="px-6 py-4 bg-gray-50 border-b border-gray-200 flex items-center justify-between">
+            <h2 class="font-bold text-gray-800 flex items-center gap-2">
+                <span class="bg-red-500 text-white text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center">4</span>
+                Pricing Packages
+            </h2>
+            <p class="text-xs text-gray-500">Customer picks one package at checkout. Leave empty to show the product's default price.</p>
+        </div>
+        <div class="p-6">
+
+            <div id="pkg-rows" class="space-y-3 mb-4">
+                <?php
+                $existingPkgs = $pageData['packages'] ?? [];
+                if (empty($existingPkgs)) $existingPkgs = []; // start empty, JS adds first row
+                foreach ($existingPkgs as $pi => $pkg):
+                ?>
+                <div class="pkg-row grid grid-cols-12 gap-2 items-center bg-gray-50 border border-gray-200 rounded-lg p-3">
+                    <div class="col-span-4">
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Label</label>
+                        <input type="text" name="pkg_label[]" value="<?= htmlspecialchars($pkg['label']) ?>"
+                            placeholder="e.g. 2 Pieces" class="w-full border border-gray-300 rounded p-2 text-sm focus:border-red-500 focus:outline-none">
+                    </div>
+                    <div class="col-span-2">
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Qty</label>
+                        <input type="number" name="pkg_qty[]" value="<?= (int)$pkg['quantity'] ?>" min="1"
+                            class="w-full border border-gray-300 rounded p-2 text-sm focus:border-red-500 focus:outline-none">
+                    </div>
+                    <div class="col-span-3">
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Price (৳)</label>
+                        <input type="number" name="pkg_price[]" value="<?= (int)$pkg['price'] ?>" min="0"
+                            class="w-full border border-gray-300 rounded p-2 text-sm focus:border-red-500 focus:outline-none">
+                    </div>
+                    <div class="col-span-2">
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Badge <span class="font-normal">(opt.)</span></label>
+                        <input type="text" name="pkg_badge[]" value="<?= htmlspecialchars($pkg['badge'] ?? '') ?>"
+                            placeholder="Best Value" class="w-full border border-gray-300 rounded p-2 text-sm focus:border-red-500 focus:outline-none">
+                    </div>
+                    <div class="col-span-1 flex items-end pb-0.5">
+                        <button type="button" onclick="this.closest('.pkg-row').remove()"
+                            class="w-full flex items-center justify-center h-9 bg-red-50 hover:bg-red-100 text-red-500 rounded border border-red-200 transition">
+                            <i class="fas fa-times text-xs"></i>
+                        </button>
+                    </div>
+                </div>
+                <?php endforeach; ?>
+            </div>
+
+            <button type="button" onclick="addPkgRow()"
+                class="flex items-center gap-2 text-sm font-bold text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 border border-blue-200 px-4 py-2 rounded-lg transition">
+                <i class="fas fa-plus"></i> Add Package
+            </button>
+
+            <p class="text-xs text-gray-400 mt-3">
+                <i class="fas fa-info-circle"></i>
+                Packages are shown as selectable radio cards on the landing page. First package is selected by default.
+            </p>
+        </div>
+    </div>
+
+    <script>
+    function addPkgRow() {
+        const row = document.createElement('div');
+        row.className = 'pkg-row grid grid-cols-12 gap-2 items-center bg-gray-50 border border-gray-200 rounded-lg p-3';
+        row.innerHTML = `
+            <div class="col-span-4">
+                <label class="block text-xs font-bold text-gray-500 mb-1">Label</label>
+                <input type="text" name="pkg_label[]" placeholder="e.g. 1 Piece"
+                    class="w-full border border-gray-300 rounded p-2 text-sm focus:border-red-500 focus:outline-none">
+            </div>
+            <div class="col-span-2">
+                <label class="block text-xs font-bold text-gray-500 mb-1">Qty</label>
+                <input type="number" name="pkg_qty[]" value="1" min="1"
+                    class="w-full border border-gray-300 rounded p-2 text-sm focus:border-red-500 focus:outline-none">
+            </div>
+            <div class="col-span-3">
+                <label class="block text-xs font-bold text-gray-500 mb-1">Price (৳)</label>
+                <input type="number" name="pkg_price[]" value="" min="0" placeholder="0"
+                    class="w-full border border-gray-300 rounded p-2 text-sm focus:border-red-500 focus:outline-none">
+            </div>
+            <div class="col-span-2">
+                <label class="block text-xs font-bold text-gray-500 mb-1">Badge <span class="font-normal">(opt.)</span></label>
+                <input type="text" name="pkg_badge[]" placeholder="Best Value"
+                    class="w-full border border-gray-300 rounded p-2 text-sm focus:border-red-500 focus:outline-none">
+            </div>
+            <div class="col-span-1 flex items-end pb-0.5">
+                <button type="button" onclick="this.closest('.pkg-row').remove()"
+                    class="w-full flex items-center justify-center h-9 bg-red-50 hover:bg-red-100 text-red-500 rounded border border-red-200 transition">
+                    <i class="fas fa-times text-xs"></i>
+                </button>
+            </div>`;
+        document.getElementById('pkg-rows').appendChild(row);
+    }
+    </script>
 
     <!-- Submit -->
     <div class="flex justify-end pb-6">
