@@ -1,6 +1,8 @@
 package com.readymart.adminapp;
 
 import android.annotation.SuppressLint;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
@@ -38,8 +40,27 @@ public class MainActivity extends AppCompatActivity {
         webView.setWebViewClient(new WebViewClient() {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
-                // Keep all navigation inside the WebView
-                return false;
+                Uri uri = request.getUrl();
+                String scheme = uri.getScheme();
+                if (scheme == null) return false;
+
+                switch (scheme) {
+                    case "tel":
+                    case "mailto":
+                    case "whatsapp":
+                    case "sms":
+                    case "intent":
+                        try {
+                            Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+                            if (intent.resolveActivity(getPackageManager()) != null) {
+                                startActivity(intent);
+                            }
+                        } catch (Exception ignored) {}
+                        return true;   // consumed — don't load in WebView
+
+                    default:
+                        return false;  // let WebView handle http/https
+                }
             }
         });
 
