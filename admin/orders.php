@@ -241,47 +241,47 @@ include 'includes/header.php';
 
         <!-- Card body -->
         <div class="px-4 py-3 flex gap-3">
-            <!-- Product image -->
+            <!-- Product image with qty badge -->
             <div class="flex-shrink-0">
+                <?php $totalQty = array_sum(array_column($items, 'qty')); ?>
                 <?php if ($firstImg): ?>
                     <div class="relative">
                         <img src="<?= htmlspecialchars($firstImg) ?>"
-                             class="w-14 h-14 object-cover rounded-lg border border-gray-200"
-                             onerror="this.parentElement.innerHTML='<div class=\'w-14 h-14 bg-gray-100 rounded-lg border border-gray-200 flex items-center justify-center\'><i class=\'fas fa-box text-gray-300 text-xl\'></i></div>'">
-                        <?php if ($extraCount > 0): ?>
-                        <span class="absolute -top-1 -right-1 bg-gray-700 text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center">+<?= $extraCount ?></span>
-                        <?php endif; ?>
+                             class="w-16 h-16 object-cover rounded-lg border border-gray-200"
+                             onerror="this.parentElement.innerHTML='<div class=\'w-16 h-16 bg-gray-100 rounded-lg border border-gray-200 flex items-center justify-center\'><i class=\'fas fa-box text-gray-300 text-xl\'></i></div>'">
+                        <span class="absolute -top-1 -right-1 bg-green-500 text-white text-[10px] font-black min-w-[18px] h-[18px] px-1 rounded-full flex items-center justify-center"><?= $totalQty ?></span>
                     </div>
                 <?php else: ?>
-                    <div class="w-14 h-14 bg-gray-100 rounded-lg border border-gray-200 flex items-center justify-center">
+                    <div class="relative w-16 h-16 bg-gray-100 rounded-lg border border-gray-200 flex items-center justify-center">
                         <i class="fas fa-box text-gray-300 text-xl"></i>
+                        <span class="absolute -top-1 -right-1 bg-green-500 text-white text-[10px] font-black min-w-[18px] h-[18px] px-1 rounded-full flex items-center justify-center"><?= $totalQty ?></span>
                     </div>
                 <?php endif; ?>
             </div>
 
-            <!-- Order details -->
+            <!-- Customer info (reference style) -->
             <div class="flex-1 min-w-0">
-                <div class="text-sm font-semibold text-gray-800 truncate">
-                    <?= htmlspecialchars($items[0]['name'] ?? '—') ?>
-                    <?php if (count($items) > 1): ?>
-                        <span class="text-xs text-gray-400 font-normal">+<?= count($items)-1 ?> more</span>
-                    <?php endif; ?>
-                </div>
-                <div class="flex items-center gap-1.5 mt-1">
-                    <i class="fas fa-user text-gray-300 text-xs"></i>
-                    <span class="text-sm text-gray-700 font-medium truncate"><?= htmlspecialchars($order['customer']['name'] ?? '—') ?></span>
-                </div>
-                <div class="flex items-center gap-1.5 mt-0.5">
-                    <i class="fas fa-phone-alt text-gray-300 text-xs"></i>
-                    <span class="text-xs text-gray-500"><?= htmlspecialchars($order['customer']['phone'] ?? '') ?></span>
+                <div class="text-xs text-gray-500 truncate mb-0.5"><?= htmlspecialchars($items[0]['name'] ?? '—') ?><?php if(count($items)>1): ?> <span class="text-gray-400">+<?= count($items)-1 ?></span><?php endif; ?></div>
+                <div class="font-bold text-gray-900 text-sm leading-tight"><?= htmlspecialchars($order['customer']['name'] ?? '—') ?></div>
+                <a href="tel:<?= htmlspecialchars($order['customer']['phone'] ?? '') ?>"
+                   onclick="event.stopPropagation()"
+                   class="text-sm font-black text-blue-600 block leading-tight mt-0.5 active:opacity-70">
+                    <?= htmlspecialchars($order['customer']['phone'] ?? '') ?>
+                </a>
+                <div class="text-xs text-gray-500 mt-0.5 line-clamp-2 leading-snug">
+                    <?= htmlspecialchars($order['customer']['address'] ?? '') ?>
                 </div>
             </div>
 
             <!-- Total + action -->
-            <div class="flex-shrink-0 flex flex-col items-end justify-between">
-                <span class="text-base font-black text-gray-900">৳<?= number_format($order['total'] ?? 0) ?></span>
+            <div class="flex-shrink-0 flex flex-col items-end justify-between min-w-[70px]">
+                <div class="text-right">
+                    <div class="text-xs text-gray-400">Total</div>
+                    <div class="font-black text-gray-900 text-sm">৳<?= number_format($order['total'] ?? 0) ?></div>
+                    <div class="text-[10px] text-gray-400 mt-0.5">Ship: ৳<?= number_format($order['shipping_cost'] ?? 0) ?></div>
+                </div>
                 <a href="view_order.php?id=<?= htmlspecialchars($order['id']) ?>"
-                   class="inline-flex items-center gap-1 text-xs font-bold text-red-600 bg-red-50 border border-red-200 px-3 py-1.5 rounded-lg active:bg-red-100 transition">
+                   class="inline-flex items-center gap-1 text-xs font-bold text-red-600 bg-red-50 border border-red-200 px-3 py-1.5 rounded-lg active:bg-red-100 transition mt-2">
                     View <i class="fas fa-chevron-right text-[10px]"></i>
                 </a>
             </div>
