@@ -3,32 +3,23 @@
     <!-- ═══ MOBILE BOTTOM NAV ════════════════════════════════════════ -->
     <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-40">
         <div class="flex">
-            <?php $cp = basename($_SERVER['PHP_SELF']); ?>
-            <a href="index.php"
-               class="flex-1 flex flex-col items-center justify-center py-2 gap-0.5 <?= $cp==='index.php' ? 'text-red-500' : 'text-gray-400' ?> active:scale-90 transition-transform">
-                <i class="fas fa-tachometer-alt text-lg"></i>
-                <span class="text-[10px] font-semibold">Home</span>
+            <?php
+            $btmItems2 = [
+                ['href'=>'index.php',        'icon'=>'fa-tachometer-alt','label'=>'Home',     'pages'=>['index.php']],
+                ['href'=>'orders.php',       'icon'=>'fa-box-open',      'label'=>'Orders',   'pages'=>['orders.php','view_order.php']],
+                ['href'=>'customers.php',    'icon'=>'fa-users',         'label'=>'Customers','pages'=>['customers.php']],
+                ['href'=>'landing_pages.php','icon'=>'fa-rocket',        'label'=>'Landing',  'pages'=>['landing_pages.php','manage_landing.php']],
+                ['href'=>'settings.php',     'icon'=>'fa-cog',           'label'=>'More',     'pages'=>['settings.php','employees.php','pixel.php','products.php','add_product.php','edit_product.php']],
+            ];
+            $cp = basename($_SERVER['PHP_SELF']);
+            foreach($btmItems2 as $b):
+                $active = in_array($cp, $b['pages']) ? 'text-red-500' : 'text-gray-400';
+            ?>
+            <a href="<?= $b['href'] ?>" class="flex-1 flex flex-col items-center justify-center py-2 gap-0.5 <?= $active ?> active:scale-90 transition-transform">
+                <i class="fas <?= $b['icon'] ?> text-lg"></i>
+                <span class="text-[10px] font-semibold"><?= $b['label'] ?></span>
             </a>
-            <a href="orders.php"
-               class="flex-1 flex flex-col items-center justify-center py-2 gap-0.5 <?= in_array($cp,['orders.php','view_order.php']) ? 'text-red-500' : 'text-gray-400' ?> active:scale-90 transition-transform">
-                <i class="fas fa-box-open text-lg"></i>
-                <span class="text-[10px] font-semibold">Orders</span>
-            </a>
-            <a href="products.php"
-               class="flex-1 flex flex-col items-center justify-center py-2 gap-0.5 <?= in_array($cp,['products.php','add_product.php','edit_product.php']) ? 'text-red-500' : 'text-gray-400' ?> active:scale-90 transition-transform">
-                <i class="fas fa-tags text-lg"></i>
-                <span class="text-[10px] font-semibold">Products</span>
-            </a>
-            <a href="landing_pages.php"
-               class="flex-1 flex flex-col items-center justify-center py-2 gap-0.5 <?= in_array($cp,['landing_pages.php','manage_landing.php']) ? 'text-red-500' : 'text-gray-400' ?> active:scale-90 transition-transform">
-                <i class="fas fa-rocket text-lg"></i>
-                <span class="text-[10px] font-semibold">Landing</span>
-            </a>
-            <a href="settings.php"
-               class="flex-1 flex flex-col items-center justify-center py-2 gap-0.5 <?= $cp==='settings.php' ? 'text-red-500' : 'text-gray-400' ?> active:scale-90 transition-transform">
-                <i class="fas fa-cog text-lg"></i>
-                <span class="text-[10px] font-semibold">Settings</span>
-            </a>
+            <?php endforeach; ?>
         </div>
     </nav>
 

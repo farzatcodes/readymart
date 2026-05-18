@@ -165,7 +165,8 @@ include 'includes/header.php';
                     </td>
                     <td class="px-4 py-3">
                         <div class="text-sm font-semibold text-gray-800"><?= htmlspecialchars($order['customer']['name'] ?? '—') ?></div>
-                        <div class="text-xs text-gray-400 mt-0.5"><i class="fas fa-phone-alt mr-1"></i><?= htmlspecialchars($order['customer']['phone'] ?? '') ?></div>
+                        <?php $dp = $order['customer']['phone'] ?? ''; ?>
+                        <a href="tel:<?= bd_tel($dp) ?>" class="text-xs text-blue-600 hover:underline mt-0.5 block"><i class="fas fa-phone-alt mr-1"></i><?= htmlspecialchars($dp) ?></a>
                     </td>
                     <td class="px-4 py-3 text-xs text-gray-500 whitespace-nowrap"><?= htmlspecialchars($order['date'] ?? '') ?></td>
                     <td class="px-4 py-3 font-bold text-gray-900">৳<?= number_format($order['total'] ?? 0) ?></td>
@@ -263,10 +264,11 @@ include 'includes/header.php';
             <div class="flex-1 min-w-0">
                 <div class="text-xs text-gray-500 truncate mb-0.5"><?= htmlspecialchars($items[0]['name'] ?? '—') ?><?php if(count($items)>1): ?> <span class="text-gray-400">+<?= count($items)-1 ?></span><?php endif; ?></div>
                 <div class="font-bold text-gray-900 text-sm leading-tight"><?= htmlspecialchars($order['customer']['name'] ?? '—') ?></div>
-                <a href="tel:<?= htmlspecialchars($order['customer']['phone'] ?? '') ?>"
+                <?php $mPhone = $order['customer']['phone'] ?? ''; ?>
+                <a href="tel:<?= bd_tel($mPhone) ?>"
                    onclick="event.stopPropagation()"
                    class="text-sm font-black text-blue-600 block leading-tight mt-0.5 active:opacity-70">
-                    <?= htmlspecialchars($order['customer']['phone'] ?? '') ?>
+                    <?= htmlspecialchars($mPhone) ?>
                 </a>
                 <div class="text-xs text-gray-500 mt-0.5 line-clamp-2 leading-snug">
                     <?= htmlspecialchars($order['customer']['address'] ?? '') ?>

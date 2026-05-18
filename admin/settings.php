@@ -13,16 +13,6 @@ $deviceCount   = file_exists($tokensFile) ? count(json_decode(file_get_contents(
 
 $success = $error = '';
 
-// ── Handle pixel save ─────────────────────────────────────────────────────
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_pixels'])) {
-    $settings['pixel_head']     = $_POST['pixel_head']     ?? '';
-    $settings['pixel_body']     = $_POST['pixel_body']     ?? '';
-    $settings['pixel_purchase'] = $_POST['pixel_purchase'] ?? '';
-    file_put_contents($settingsFile, json_encode($settings, JSON_PRETTY_PRINT))
-        ? $success = 'Pixel settings saved.'
-        : $error   = 'Failed to save. Check file permissions.';
-}
-
 // ── Handle FCM service account save ──────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_fcm'])) {
     $raw = trim($_POST['fcm_service_account'] ?? '');
@@ -56,9 +46,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['send_test'])) {
 }
 ?>
 
-<div class="mb-6">
-    <h1 class="text-2xl font-bold text-gray-800">Settings</h1>
-    <p class="text-gray-500 text-sm mt-1">Pixel tracking codes and push notification configuration.</p>
+<div class="mb-5 flex items-center justify-between">
+    <div>
+        <h1 class="text-xl font-bold text-gray-800">Settings</h1>
+        <p class="text-gray-500 text-sm mt-1">Push notification configuration and Android app setup.</p>
+    </div>
+    <a href="pixel.php" class="text-sm font-bold text-blue-600 hover:underline flex items-center gap-1">
+        <i class="fas fa-code text-xs"></i> Pixel Settings
+    </a>
 </div>
 
 <?php if ($success): ?>
@@ -67,45 +62,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['send_test'])) {
 <?php if ($error): ?>
     <div class="bg-red-50 border-l-4 border-red-500 p-3 mb-5 text-sm text-red-800 rounded"><?= $error ?></div>
 <?php endif; ?>
-
-<!-- ── Pixel Code ─────────────────────────────────────────────────────── -->
-<form method="POST" class="mb-6">
-    <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-        <div class="px-6 py-4 border-b border-gray-200 flex items-center gap-3">
-            <i class="fas fa-code text-blue-500"></i>
-            <div>
-                <h2 class="font-semibold text-gray-800">Pixel &amp; Tracking Code</h2>
-                <p class="text-xs text-gray-500 mt-0.5">Injected into every landing page and the order success page.</p>
-            </div>
-        </div>
-        <div class="p-6 space-y-7">
-            <?php
-            $slots = [
-                ['key' => 'pixel_head',     'tag' => '@head',     'color' => 'purple', 'label' => 'Head Pixel (Page View)',           'desc' => 'Injected inside &lt;head&gt; — base pixel code &amp; page-view events.'],
-                ['key' => 'pixel_body',     'tag' => '@body',     'color' => 'purple', 'label' => 'Body Open (Noscript Fallback)',     'desc' => 'Injected right after &lt;body&gt; — &lt;noscript&gt; pixel fallbacks.'],
-                ['key' => 'pixel_purchase', 'tag' => '@purchase', 'color' => 'green',  'label' => 'Purchase / Conversion Event',      'desc' => 'Injected on the order success page — e.g. fbq(\'track\', \'Purchase\').'],
-            ];
-            foreach ($slots as $s): ?>
-            <div>
-                <div class="flex items-center gap-2 mb-1">
-                    <code class="text-xs bg-gray-100 border border-gray-200 text-<?= $s['color'] ?>-700 font-mono px-2 py-0.5 rounded"><?= $s['tag'] ?></code>
-                    <span class="font-semibold text-sm text-gray-700"><?= $s['label'] ?></span>
-                </div>
-                <p class="text-xs text-gray-400 mb-2"><?= $s['desc'] ?></p>
-                <textarea name="<?= $s['key'] ?>" rows="5" spellcheck="false"
-                    class="w-full font-mono text-xs border border-gray-200 rounded p-3 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400 resize-y"
-                    placeholder="<!-- paste code here -->"><?= htmlspecialchars($settings[$s['key']] ?? '') ?></textarea>
-            </div>
-            <?php endforeach; ?>
-        </div>
-        <div class="px-6 py-4 border-t border-gray-100 bg-gray-50 flex justify-end">
-            <button name="save_pixels" type="submit"
-                class="bg-gray-900 hover:bg-gray-700 text-white font-bold px-5 py-2 rounded shadow text-sm transition flex items-center gap-2">
-                <i class="fas fa-save"></i> Save Pixel Settings
-            </button>
-        </div>
-    </div>
-</form>
 
 <!-- ── FCM Push Notifications ─────────────────────────────────────────── -->
 <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden mb-6">

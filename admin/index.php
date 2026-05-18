@@ -104,13 +104,15 @@ include 'includes/header.php';
             $sc = $statusColors[$order['status'] ?? ''] ?? 'bg-gray-100 text-gray-700';
             $items = $order['items'] ?? [];
             $firstImg = $items[0]['image'] ?? '';
+            $phone = $order['customer']['phone'] ?? '';
+            $telHref = bd_tel($phone);
         ?>
-        <a href="view_order.php?id=<?= htmlspecialchars($order['id']) ?>"
-           class="flex items-center gap-3 px-4 py-3 active:bg-gray-50 transition">
+        <div class="flex items-center gap-3 px-4 py-3 active:bg-gray-50 transition cursor-pointer"
+             onclick="location.href='view_order.php?id=<?= htmlspecialchars($order['id']) ?>'">
             <?php if($firstImg): ?>
                 <img src="<?= htmlspecialchars($firstImg) ?>"
                      class="w-11 h-11 object-cover rounded-lg border border-gray-200 flex-shrink-0"
-                     onerror="this.outerHTML='<div class=\'w-11 h-11 bg-gray-100 rounded-lg border border-gray-200 flex items-center justify-center flex-shrink-0\'><i class=\'fas fa-box text-gray-300\'></i></div>'">
+                     onerror="this.className='w-11 h-11 bg-gray-100 rounded-lg border border-gray-200 flex-shrink-0'">
             <?php else: ?>
                 <div class="w-11 h-11 bg-gray-100 rounded-lg border border-gray-200 flex items-center justify-center flex-shrink-0">
                     <i class="fas fa-box text-gray-300"></i>
@@ -118,20 +120,21 @@ include 'includes/header.php';
             <?php endif; ?>
             <div class="flex-1 min-w-0">
                 <div class="font-bold text-gray-900 text-sm">#<?= htmlspecialchars($order['id']) ?></div>
-                <div class="text-xs text-gray-500 truncate">
-                    <?= htmlspecialchars($order['customer']['name'] ?? '—') ?>
-                    &nbsp;·&nbsp;
-                    <a href="tel:<?= htmlspecialchars($order['customer']['phone'] ?? '') ?>"
-                       onclick="event.stopPropagation()"
-                       class="text-blue-600 font-semibold"><?= htmlspecialchars($order['customer']['phone'] ?? '') ?></a>
+                <div class="flex items-center gap-2 mt-0.5">
+                    <span class="text-xs text-gray-600 truncate max-w-[100px]"><?= htmlspecialchars($order['customer']['name'] ?? '—') ?></span>
+                    <?php if($telHref): ?>
+                    <a href="tel:<?= $telHref ?>" onclick="event.stopPropagation()"
+                       class="text-xs font-bold text-blue-600 flex-shrink-0">
+                        <i class="fas fa-phone-alt text-[10px] mr-0.5"></i><?= htmlspecialchars($phone) ?>
+                    </a>
+                    <?php endif; ?>
                 </div>
             </div>
             <div class="flex-shrink-0 text-right">
                 <div class="font-bold text-gray-900 text-sm">৳<?= number_format($order['total'] ?? 0) ?></div>
                 <span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full <?= $sc ?>"><?= $order['status'] ?? '' ?></span>
             </div>
-            <i class="fas fa-chevron-right text-gray-300 text-xs flex-shrink-0"></i>
-        </a>
+        </div>
         <?php endforeach; ?>
         </div>
         <?php endif; ?>
@@ -331,8 +334,9 @@ include 'includes/header.php';
                 </td>
                 <td class="px-5 py-3.5">
                     <div class="text-sm font-medium text-gray-800"><?= htmlspecialchars($order['customer']['name'] ?? '—') ?></div>
-                    <a href="tel:<?= htmlspecialchars($order['customer']['phone'] ?? '') ?>"
-                       class="text-xs text-blue-600 hover:underline"><?= htmlspecialchars($order['customer']['phone'] ?? '') ?></a>
+                    <?php $p = $order['customer']['phone'] ?? ''; ?>
+                    <a href="tel:<?= bd_tel($p) ?>"
+                       class="text-xs text-blue-600 hover:underline"><?= htmlspecialchars($p) ?></a>
                 </td>
                 <td class="px-5 py-3.5 text-sm text-gray-500"><?= htmlspecialchars($order['date'] ?? '') ?></td>
                 <td class="px-5 py-3.5 font-bold text-gray-900">৳<?= number_format($order['total'] ?? 0) ?></td>
