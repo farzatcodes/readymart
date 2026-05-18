@@ -174,8 +174,8 @@ $sc = $statusColors[$order['status'] ?? ''] ?? 'bg-gray-100 text-gray-700 border
                     </div>
                     <div>
                         <div class="font-semibold text-gray-800 text-sm"><?= htmlspecialchars($order['customer']['name']) ?></div>
-                        <a href="tel:<?= htmlspecialchars($order['customer']['phone']) ?>"
-                           class="text-xs text-blue-600 hover:underline"><?= htmlspecialchars($order['customer']['phone']) ?></a>
+                        <a href="tel:<?= bd_tel($order['customer']['phone'] ?? '') ?>"
+                           class="text-sm font-bold text-blue-600 hover:underline"><?= htmlspecialchars($order['customer']['phone'] ?? '') ?></a>
                     </div>
                 </div>
 
