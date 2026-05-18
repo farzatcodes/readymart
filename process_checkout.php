@@ -36,10 +36,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $subtotal += $itemTotal;
 
             $items[] = [
-                'name' => htmlspecialchars($item['name']),
-                'qty' => $qty,
+                'name'  => htmlspecialchars($item['name']),
+                'qty'   => $qty,
                 'price' => (int)$item['price'],
-                'total' => $itemTotal
+                'total' => $itemTotal,
+                'image' => htmlspecialchars($item['image'] ?? ''),
             ];
         }
     }
