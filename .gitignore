@@ -1,0 +1,3 @@
+# FCM private key — never commit
+fcm_service_account.json
+.fcm_token_cache

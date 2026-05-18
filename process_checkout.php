@@ -71,6 +71,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Save to JSON
     file_put_contents($ordersFile, json_encode($orders, JSON_PRETTY_PRINT));
 
+    // Push notification to admin devices
+    require_once __DIR__ . '/includes/fcm.php';
+    $itemSummary = !empty($items) ? $items[0]['name'] . (count($items) > 1 ? ' +' . (count($items)-1) . ' more' : '') : 'Item';
+    fcm_send(
+        '🛒 New Order — ' . $newOrder['id'],
+        $customer_name . ' · ৳' . number_format($total) . ' · ' . $itemSummary,
+        ['order_id' => $newOrder['id'], 'url' => '/admin/view_order.php?id=' . $newOrder['id']]
+    );
+
     // Redirect to success
     header("Location: checkout_success.php?order_id=" . $newOrder['id']);
     exit;
