@@ -37,8 +37,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['bulk_status'], $_POST
 
 // ── Date / status filters ───────────────────────────────────────────────────
 // Bug #12: validate date strings to prevent arbitrary string injection
-$rawFrom = trim($_GET['date_from'] ?? '');
-$rawTo   = trim($_GET['date_to']   ?? '');
+$today  = date('Y-m-d');
+// Default to today when landing with no filters at all
+$noFiltersSet = !isset($_GET['date_from']) && !isset($_GET['date_to']) && !isset($_GET['status']);
+$rawFrom = trim($_GET['date_from'] ?? ($noFiltersSet ? $today : ''));
+$rawTo   = trim($_GET['date_to']   ?? ($noFiltersSet ? $today : ''));
 $filterDateFrom = (DateTime::createFromFormat('Y-m-d', $rawFrom) !== false) ? $rawFrom : '';
 $filterDateTo   = (DateTime::createFromFormat('Y-m-d', $rawTo)   !== false) ? $rawTo   : '';
 $filterStatus   = trim($_GET['status'] ?? '');
@@ -85,40 +88,57 @@ include 'includes/header.php';
 <?php endif; ?>
 
 <!-- ── Filter bar ──────────────────────────────────────────────────────────── -->
-<form method="GET" action="orders.php"
+<form method="GET" action="orders.php" id="filter-form"
       class="bg-white rounded-xl border border-gray-200 shadow-sm px-4 py-3 mb-4 flex flex-wrap gap-3 items-end">
     <div class="flex-1 min-w-[130px]">
         <label class="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">From Date</label>
-        <input type="date" name="date_from" value="<?= htmlspecialchars($filterDateFrom) ?>"
+        <input type="date" name="date_from" id="input-date-from"
+               value="<?= htmlspecialchars($filterDateFrom) ?>"
+               onchange="document.getElementById('filter-form').submit()"
                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-800 bg-white">
     </div>
     <div class="flex-1 min-w-[130px]">
         <label class="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">To Date</label>
-        <input type="date" name="date_to" value="<?= htmlspecialchars($filterDateTo) ?>"
+        <input type="date" name="date_to" id="input-date-to"
+               value="<?= htmlspecialchars($filterDateTo) ?>"
+               onchange="document.getElementById('filter-form').submit()"
                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-800 bg-white">
     </div>
     <div class="flex-1 min-w-[120px]">
         <label class="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Status</label>
-        <select name="status" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-800 bg-white">
+        <select name="status" onchange="this.form.submit()"
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-800 bg-white">
             <option value="">All Statuses</option>
             <?php foreach($validStatuses as $s): ?>
             <option value="<?= $s ?>" <?= $filterStatus===$s?'selected':'' ?>><?= $s ?></option>
             <?php endforeach; ?>
         </select>
     </div>
-    <div class="flex gap-2">
-        <button type="submit"
-                class="bg-gray-900 hover:bg-gray-700 text-white font-bold px-4 py-2 rounded-lg text-sm transition flex items-center gap-1.5">
-            <i class="fas fa-filter text-xs"></i> Filter
+    <div class="flex gap-2 flex-wrap">
+        <button type="button" onclick="setToday()"
+                class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-3 py-2 rounded-lg text-sm transition flex items-center gap-1.5">
+            <i class="fas fa-calendar-day text-xs"></i> Today
         </button>
-        <?php if($filterDateFrom||$filterDateTo||$filterStatus): ?>
-        <a href="orders.php"
-           class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold px-4 py-2 rounded-lg text-sm transition flex items-center gap-1.5">
-            <i class="fas fa-times text-xs"></i> Clear
+        <a href="orders.php?date_from=&date_to=&status="
+           class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold px-3 py-2 rounded-lg text-sm transition flex items-center gap-1.5">
+            <i class="fas fa-list text-xs"></i> All
+        </a>
+        <?php if($filterStatus): ?>
+        <a href="orders.php?date_from=<?= urlencode($filterDateFrom) ?>&date_to=<?= urlencode($filterDateTo) ?>"
+           class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold px-3 py-2 rounded-lg text-sm transition flex items-center gap-1.5">
+            <i class="fas fa-times text-xs"></i> Clear Status
         </a>
         <?php endif; ?>
     </div>
 </form>
+<script>
+function setToday() {
+    var today = new Date().toISOString().slice(0,10);
+    document.getElementById('input-date-from').value = today;
+    document.getElementById('input-date-to').value   = today;
+    document.getElementById('filter-form').submit();
+}
+</script>
 
 <!-- Bulk action bar -->
 <div id="bulk-bar"
