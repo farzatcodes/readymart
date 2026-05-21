@@ -2,14 +2,15 @@
 $jsonFile = '../orders.json';
 $orders   = file_exists($jsonFile) ? json_decode(file_get_contents($jsonFile), true) ?? [] : [];
 
-$flashMsg   = '';
-$flashType  = '';
+$flashMsg  = '';
+$flashType = '';
+
+$validStatuses = ['Pending', 'Processing', 'Completed', 'Cancelled', 'Hold'];
 
 // ── Bulk status update ──────────────────────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['bulk_status'], $_POST['order_ids'])) {
-    $validStatuses = ['Pending', 'Processing', 'Completed', 'Cancelled'];
-    $newStatus     = $_POST['bulk_status'];
-    $selectedIds   = (array)$_POST['order_ids'];
+    $newStatus   = $_POST['bulk_status'];
+    $selectedIds = (array)$_POST['order_ids'];
 
     if (in_array($newStatus, $validStatuses) && !empty($selectedIds)) {
         $updated = 0;
@@ -24,20 +25,47 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['bulk_status'], $_POST
         $flashMsg  = $updated . ' order' . ($updated !== 1 ? 's' : '') . ' marked as <strong>' . htmlspecialchars($newStatus) . '</strong>.';
         $flashType = 'green';
     } else {
-        $flashMsg  = 'Invalid action. Please select a valid status.';
+        $flashMsg  = 'Invalid action.';
         $flashType = 'red';
     }
 }
 
+// ── Date / status filters ───────────────────────────────────────────────────
+$filterDateFrom = trim($_GET['date_from'] ?? '');
+$filterDateTo   = trim($_GET['date_to']   ?? '');
+$filterStatus   = trim($_GET['status']    ?? '');
+
 $ordersDisplay = array_reverse($orders);
+
+if ($filterDateFrom !== '') {
+    $ordersDisplay = array_filter($ordersDisplay, fn($o) => substr($o['date'] ?? '', 0, 10) >= $filterDateFrom);
+}
+if ($filterDateTo !== '') {
+    $ordersDisplay = array_filter($ordersDisplay, fn($o) => substr($o['date'] ?? '', 0, 10) <= $filterDateTo);
+}
+if ($filterStatus !== '' && in_array($filterStatus, $validStatuses)) {
+    $ordersDisplay = array_filter($ordersDisplay, fn($o) => ($o['status'] ?? '') === $filterStatus);
+}
+$ordersDisplay = array_values($ordersDisplay);
+
+$statusColors = [
+    'Pending'    => ['pill'=>'bg-orange-100 text-orange-700 border-orange-200', 'dot'=>'bg-orange-400'],
+    'Processing' => ['pill'=>'bg-blue-100 text-blue-700 border-blue-200',      'dot'=>'bg-blue-400'],
+    'Completed'  => ['pill'=>'bg-green-100 text-green-700 border-green-200',   'dot'=>'bg-green-400'],
+    'Cancelled'  => ['pill'=>'bg-red-100 text-red-700 border-red-200',         'dot'=>'bg-red-400'],
+    'Hold'       => ['pill'=>'bg-yellow-100 text-yellow-700 border-yellow-200','dot'=>'bg-yellow-400'],
+];
 
 include 'includes/header.php';
 ?>
 
-<div class="mb-5 flex items-center justify-between">
+<div class="mb-4 flex items-center justify-between">
     <div>
         <h1 class="text-xl font-bold text-gray-800">Orders</h1>
-        <p class="text-gray-500 text-sm mt-0.5"><?= count($orders) ?> total orders</p>
+        <p class="text-gray-500 text-sm mt-0.5">
+            <?= count($ordersDisplay) ?> order<?= count($ordersDisplay)!==1?'s':'' ?>
+            <?= ($filterDateFrom||$filterDateTo||$filterStatus) ? '<span class="text-blue-600 font-semibold">(filtered)</span>' : '' ?>
+        </p>
     </div>
 </div>
 
@@ -47,6 +75,42 @@ include 'includes/header.php';
     <span><?= $flashMsg ?></span>
 </div>
 <?php endif; ?>
+
+<!-- ── Filter bar ──────────────────────────────────────────────────────────── -->
+<form method="GET" action="orders.php"
+      class="bg-white rounded-xl border border-gray-200 shadow-sm px-4 py-3 mb-4 flex flex-wrap gap-3 items-end">
+    <div class="flex-1 min-w-[130px]">
+        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">From Date</label>
+        <input type="date" name="date_from" value="<?= htmlspecialchars($filterDateFrom) ?>"
+               class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-800 bg-white">
+    </div>
+    <div class="flex-1 min-w-[130px]">
+        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">To Date</label>
+        <input type="date" name="date_to" value="<?= htmlspecialchars($filterDateTo) ?>"
+               class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-800 bg-white">
+    </div>
+    <div class="flex-1 min-w-[120px]">
+        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Status</label>
+        <select name="status" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-800 bg-white">
+            <option value="">All Statuses</option>
+            <?php foreach($validStatuses as $s): ?>
+            <option value="<?= $s ?>" <?= $filterStatus===$s?'selected':'' ?>><?= $s ?></option>
+            <?php endforeach; ?>
+        </select>
+    </div>
+    <div class="flex gap-2">
+        <button type="submit"
+                class="bg-gray-900 hover:bg-gray-700 text-white font-bold px-4 py-2 rounded-lg text-sm transition flex items-center gap-1.5">
+            <i class="fas fa-filter text-xs"></i> Filter
+        </button>
+        <?php if($filterDateFrom||$filterDateTo||$filterStatus): ?>
+        <a href="orders.php"
+           class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold px-4 py-2 rounded-lg text-sm transition flex items-center gap-1.5">
+            <i class="fas fa-times text-xs"></i> Clear
+        </a>
+        <?php endif; ?>
+    </div>
+</form>
 
 <!-- Bulk action bar -->
 <div id="bulk-bar"
@@ -59,10 +123,9 @@ include 'includes/header.php';
             <select id="bulk-status-select"
                     class="bg-gray-800 border border-gray-600 text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-gray-400 flex-1 sm:flex-none">
                 <option value="">-- Pick status --</option>
-                <option value="Pending">Pending</option>
-                <option value="Processing">Processing</option>
-                <option value="Completed">Completed</option>
-                <option value="Cancelled">Cancelled</option>
+                <?php foreach($validStatuses as $s): ?>
+                <option value="<?= $s ?>"><?= $s ?></option>
+                <?php endforeach; ?>
             </select>
             <button type="button" onclick="applyBulk()"
                     class="bg-red-600 active:bg-red-700 text-white text-sm font-bold px-5 py-2 rounded-lg transition">
@@ -82,7 +145,7 @@ include 'includes/header.php';
     <div id="bulk-ids-container"></div>
 </form>
 
-<!-- ═══ DESKTOP TABLE (md+) ═══════════════════════════════════════════ -->
+<!-- ═══ DESKTOP TABLE ═══════════════════════════════════════════════════════ -->
 <div class="hidden md:block bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
     <div class="overflow-x-auto">
         <table class="w-full text-left">
@@ -103,101 +166,93 @@ include 'includes/header.php';
                 </tr>
             </thead>
             <tbody>
-                <?php if (empty($ordersDisplay)): ?>
-                <tr>
-                    <td colspan="8" class="px-4 py-16 text-center text-gray-400">
-                        <i class="fas fa-box-open text-5xl mb-3 block text-gray-200"></i>
-                        No orders placed yet.
-                    </td>
-                </tr>
-                <?php else: ?>
-                <?php foreach ($ordersDisplay as $order):
-                    $statusColors = [
-                        'Pending'    => 'bg-orange-100 text-orange-700 border-orange-200',
-                        'Processing' => 'bg-blue-100 text-blue-700 border-blue-200',
-                        'Completed'  => 'bg-green-100 text-green-700 border-green-200',
-                        'Cancelled'  => 'bg-red-100 text-red-700 border-red-200',
-                    ];
-                    $sc        = $statusColors[$order['status'] ?? ''] ?? 'bg-gray-100 text-gray-700 border-gray-200';
-                    $items     = $order['items'] ?? [];
-                    $firstImg  = $items[0]['image'] ?? '';
-                    $extraCount = max(0, count($items) - 1);
-                ?>
-                <tr class="order-row border-b border-gray-100 hover:bg-gray-50 transition"
-                    data-id="<?= htmlspecialchars($order['id']) ?>">
-                    <td class="px-4 py-3">
-                        <input type="checkbox" value="<?= htmlspecialchars($order['id']) ?>"
-                               class="row-check-desktop row-check w-4 h-4 rounded border-gray-300 cursor-pointer accent-red-600"
-                               onchange="onRowCheck()">
-                    </td>
-                    <td class="px-4 py-3">
-                        <div class="font-bold text-gray-900 text-sm">#<?= htmlspecialchars($order['id']) ?></div>
-                        <?php if (($order['source'] ?? '') === 'landing_page'): ?>
-                            <span class="text-[10px] font-bold bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full border border-blue-200">Landing</span>
-                        <?php endif; ?>
-                    </td>
-                    <td class="px-4 py-3">
-                        <div class="flex items-center gap-2">
-                            <?php if ($firstImg): ?>
-                                <div class="relative flex-shrink-0">
-                                    <img src="<?= htmlspecialchars($firstImg) ?>"
-                                         class="w-12 h-12 object-cover rounded-lg border border-gray-200 bg-gray-50"
-                                         onerror="this.style.display='none'">
-                                    <?php if ($extraCount > 0): ?>
-                                    <span class="absolute -top-1 -right-1 bg-gray-700 text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center">+<?= $extraCount ?></span>
-                                    <?php endif; ?>
-                                </div>
-                            <?php else: ?>
-                                <div class="w-12 h-12 bg-gray-100 rounded-lg border border-gray-200 flex items-center justify-center flex-shrink-0">
-                                    <i class="fas fa-box text-gray-300 text-lg"></i>
-                                </div>
-                            <?php endif; ?>
-                            <div class="min-w-0">
-                                <?php foreach (array_slice($items, 0, 2) as $item): ?>
-                                <div class="text-sm font-medium text-gray-800 truncate max-w-[160px]"><?= htmlspecialchars($item['name']) ?></div>
-                                <div class="text-xs text-gray-400">Qty: <?= (int)$item['qty'] ?> · ৳<?= number_format($item['price']) ?></div>
-                                <?php endforeach; ?>
-                                <?php if ($extraCount > 1): ?>
-                                <div class="text-xs text-gray-400">+<?= $extraCount - 1 ?> more</div>
+            <?php if (empty($ordersDisplay)): ?>
+            <tr>
+                <td colspan="8" class="px-4 py-16 text-center text-gray-400">
+                    <i class="fas fa-box-open text-5xl mb-3 block text-gray-200"></i>
+                    <?= ($filterDateFrom||$filterDateTo||$filterStatus) ? 'No orders match the current filter.' : 'No orders placed yet.' ?>
+                </td>
+            </tr>
+            <?php else: ?>
+            <?php foreach ($ordersDisplay as $order):
+                $sc        = $statusColors[$order['status'] ?? ''] ?? ['pill'=>'bg-gray-100 text-gray-700 border-gray-200'];
+                $items     = $order['items'] ?? [];
+                $firstImg  = $items[0]['image'] ?? '';
+                $extraCount = max(0, count($items) - 1);
+                $totalQty   = array_sum(array_column($items, 'qty'));
+            ?>
+            <tr class="order-row border-b border-gray-100 hover:bg-gray-50 transition" data-id="<?= htmlspecialchars($order['id']) ?>">
+                <td class="px-4 py-3">
+                    <input type="checkbox" value="<?= htmlspecialchars($order['id']) ?>"
+                           class="row-check-desktop row-check w-4 h-4 rounded border-gray-300 cursor-pointer accent-red-600"
+                           onchange="onRowCheck()">
+                </td>
+                <td class="px-4 py-3">
+                    <div class="font-bold text-gray-900 text-sm">#<?= htmlspecialchars($order['id']) ?></div>
+                    <?php if (($order['source'] ?? '') === 'landing_page'): ?>
+                        <span class="text-[10px] font-bold bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full border border-blue-200">Landing</span>
+                    <?php endif; ?>
+                </td>
+                <td class="px-4 py-3">
+                    <div class="flex items-center gap-2">
+                        <?php if ($firstImg): ?>
+                            <div class="relative flex-shrink-0">
+                                <img src="<?= htmlspecialchars($firstImg) ?>"
+                                     class="w-12 h-12 object-cover rounded-lg border border-gray-200 bg-gray-50"
+                                     onerror="this.style.display='none'">
+                                <?php if ($extraCount > 0): ?>
+                                <span class="absolute -top-1 -right-1 bg-gray-700 text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center">+<?= $extraCount ?></span>
                                 <?php endif; ?>
                             </div>
+                        <?php else: ?>
+                            <div class="w-12 h-12 bg-gray-100 rounded-lg border border-gray-200 flex items-center justify-center flex-shrink-0">
+                                <i class="fas fa-box text-gray-300 text-lg"></i>
+                            </div>
+                        <?php endif; ?>
+                        <div class="min-w-0">
+                            <?php foreach (array_slice($items, 0, 2) as $item): ?>
+                            <div class="text-sm font-medium text-gray-800 truncate max-w-[160px]"><?= htmlspecialchars($item['name']) ?></div>
+                            <div class="text-xs text-gray-400">Qty: <?= (int)$item['qty'] ?> · ৳<?= number_format($item['price']) ?></div>
+                            <?php endforeach; ?>
+                            <?php if ($extraCount > 1): ?><div class="text-xs text-gray-400">+<?= $extraCount-1 ?> more</div><?php endif; ?>
                         </div>
-                    </td>
-                    <td class="px-4 py-3">
-                        <div class="text-sm font-semibold text-gray-800"><?= htmlspecialchars($order['customer']['name'] ?? '—') ?></div>
-                        <?php $dp = $order['customer']['phone'] ?? ''; ?>
-                        <a href="tel:<?= bd_tel($dp) ?>" class="text-xs text-blue-600 hover:underline mt-0.5 block"><i class="fas fa-phone-alt mr-1"></i><?= htmlspecialchars($dp) ?></a>
-                    </td>
-                    <td class="px-4 py-3 text-xs text-gray-500 whitespace-nowrap"><?= htmlspecialchars($order['date'] ?? '') ?></td>
-                    <td class="px-4 py-3 font-bold text-gray-900">৳<?= number_format($order['total'] ?? 0) ?></td>
-                    <td class="px-4 py-3">
-                        <span class="px-2.5 py-1 rounded-full text-xs font-bold border <?= $sc ?>"><?= htmlspecialchars($order['status'] ?? '') ?></span>
-                    </td>
-                    <td class="px-4 py-3 text-right">
-                        <a href="view_order.php?id=<?= htmlspecialchars($order['id']) ?>"
-                           class="inline-flex items-center gap-1 text-xs font-bold text-gray-500 hover:text-red-600 transition">
-                            Details <i class="fas fa-chevron-right text-[10px]"></i>
-                        </a>
-                    </td>
-                </tr>
-                <?php endforeach; ?>
-                <?php endif; ?>
+                    </div>
+                </td>
+                <td class="px-4 py-3">
+                    <div class="text-sm font-semibold text-gray-800"><?= htmlspecialchars($order['customer']['name'] ?? '—') ?></div>
+                    <?php $dp = $order['customer']['phone'] ?? ''; ?>
+                    <a href="tel:<?= bd_tel($dp) ?>" class="text-xs text-blue-600 hover:underline mt-0.5 block"><i class="fas fa-phone-alt mr-1"></i><?= htmlspecialchars($dp) ?></a>
+                </td>
+                <td class="px-4 py-3 text-xs text-gray-500 whitespace-nowrap"><?= htmlspecialchars(substr($order['date'] ?? '', 0, 16)) ?></td>
+                <td class="px-4 py-3 font-bold text-gray-900">৳<?= number_format($order['total'] ?? 0) ?></td>
+                <td class="px-4 py-3">
+                    <span class="px-2.5 py-1 rounded-full text-xs font-bold border <?= $sc['pill'] ?>"><?= htmlspecialchars($order['status'] ?? '') ?></span>
+                </td>
+                <td class="px-4 py-3 text-right">
+                    <a href="view_order.php?id=<?= htmlspecialchars($order['id']) ?>"
+                       class="inline-flex items-center gap-1 text-xs font-bold text-gray-500 hover:text-red-600 transition">
+                        Details <i class="fas fa-chevron-right text-[10px]"></i>
+                    </a>
+                </td>
+            </tr>
+            <?php endforeach; ?>
+            <?php endif; ?>
             </tbody>
         </table>
     </div>
 </div>
 
-<!-- ═══ MOBILE CARD LIST (< md) ═══════════════════════════════════════ -->
+<!-- ═══ MOBILE CARD LIST ════════════════════════════════════════════════════ -->
 <div class="md:hidden space-y-3">
 
     <?php if (empty($ordersDisplay)): ?>
     <div class="bg-white rounded-xl border border-gray-200 p-10 text-center text-gray-400">
         <i class="fas fa-box-open text-4xl mb-3 block text-gray-200"></i>
-        No orders placed yet.
+        <?= ($filterDateFrom||$filterDateTo||$filterStatus) ? 'No orders match this filter.' : 'No orders placed yet.' ?>
     </div>
     <?php else: ?>
 
-    <!-- Mobile Select All bar -->
+    <!-- Mobile Select All -->
     <div class="bg-white rounded-xl border border-gray-200 px-4 py-3 flex items-center justify-between">
         <label class="flex items-center gap-2.5 cursor-pointer text-sm font-semibold text-gray-700">
             <input type="checkbox" id="select-all-mobile"
@@ -209,16 +264,11 @@ include 'includes/header.php';
     </div>
 
     <?php foreach ($ordersDisplay as $order):
-        $statusColors = [
-            'Pending'    => ['pill'=>'bg-orange-100 text-orange-700','dot'=>'bg-orange-400'],
-            'Processing' => ['pill'=>'bg-blue-100 text-blue-700',    'dot'=>'bg-blue-400'],
-            'Completed'  => ['pill'=>'bg-green-100 text-green-700',  'dot'=>'bg-green-400'],
-            'Cancelled'  => ['pill'=>'bg-red-100 text-red-700',      'dot'=>'bg-red-400'],
-        ];
-        $sc      = $statusColors[$order['status'] ?? ''] ?? ['pill'=>'bg-gray-100 text-gray-700','dot'=>'bg-gray-400'];
-        $items   = $order['items'] ?? [];
-        $firstImg = $items[0]['image'] ?? '';
-        $extraCount = max(0, count($items) - 1);
+        $sc        = $statusColors[$order['status'] ?? ''] ?? ['pill'=>'bg-gray-100 text-gray-700'];
+        $items     = $order['items'] ?? [];
+        $firstImg  = $items[0]['image'] ?? '';
+        $totalQty  = array_sum(array_column($items, 'qty'));
+        $mPhone    = $order['customer']['phone'] ?? '';
     ?>
     <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden order-card">
         <!-- Card header -->
@@ -233,7 +283,7 @@ include 'includes/header.php';
                         <span class="text-[10px] font-bold bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full">Landing</span>
                     <?php endif; ?>
                 </div>
-                <span class="text-xs text-gray-400"><?= htmlspecialchars($order['date'] ?? '') ?></span>
+                <span class="text-xs text-gray-400"><?= htmlspecialchars(substr($order['date'] ?? '', 0, 16)) ?></span>
             </div>
             <span class="flex-shrink-0 px-2.5 py-1 rounded-full text-xs font-bold <?= $sc['pill'] ?>">
                 <?= htmlspecialchars($order['status'] ?? '') ?>
@@ -244,7 +294,6 @@ include 'includes/header.php';
         <div class="px-4 py-3 flex gap-3">
             <!-- Product image with qty badge -->
             <div class="flex-shrink-0">
-                <?php $totalQty = array_sum(array_column($items, 'qty')); ?>
                 <?php if ($firstImg): ?>
                     <div class="relative">
                         <img src="<?= htmlspecialchars($firstImg) ?>"
@@ -260,11 +309,10 @@ include 'includes/header.php';
                 <?php endif; ?>
             </div>
 
-            <!-- Customer info (reference style) -->
+            <!-- Customer info -->
             <div class="flex-1 min-w-0">
                 <div class="text-xs text-gray-500 truncate mb-0.5"><?= htmlspecialchars($items[0]['name'] ?? '—') ?><?php if(count($items)>1): ?> <span class="text-gray-400">+<?= count($items)-1 ?></span><?php endif; ?></div>
                 <div class="font-bold text-gray-900 text-sm leading-tight"><?= htmlspecialchars($order['customer']['name'] ?? '—') ?></div>
-                <?php $mPhone = $order['customer']['phone'] ?? ''; ?>
                 <a href="tel:<?= bd_tel($mPhone) ?>"
                    onclick="event.stopPropagation()"
                    class="text-sm font-black text-blue-600 block leading-tight mt-0.5 active:opacity-70">
@@ -297,30 +345,23 @@ include 'includes/header.php';
 function getChecked() {
     return [...document.querySelectorAll('.row-check:checked')];
 }
-
 function onRowCheck() {
     var checked = getChecked();
     var total   = document.querySelectorAll('.row-check').length;
-
-    ['desktop','mobile'].forEach(function(variant) {
-        var sa = document.getElementById('select-all-' + variant);
-        if (!sa) return;
+    ['desktop','mobile'].forEach(function(v){
+        var sa = document.getElementById('select-all-'+v);
+        if(!sa) return;
         sa.indeterminate = checked.length > 0 && checked.length < total;
         sa.checked       = checked.length === total && total > 0;
     });
-
     updateBulkBar(checked.length);
 }
-
 function toggleAll(master, variant) {
-    var cls = variant === 'mobile' ? '.row-check-mobile' : '.row-check-desktop';
-    document.querySelectorAll(cls).forEach(function(cb){ cb.checked = master.checked; });
-    // sync the other master
-    var other = document.getElementById('select-all-' + (variant==='mobile'?'desktop':'mobile'));
-    if (other) other.checked = master.checked;
+    document.querySelectorAll('.row-check-'+variant).forEach(function(cb){ cb.checked = master.checked; });
+    var other = document.getElementById('select-all-'+(variant==='mobile'?'desktop':'mobile'));
+    if(other) other.checked = master.checked;
     updateBulkBar(master.checked ? document.querySelectorAll('.row-check').length : 0);
 }
-
 function clearSelection() {
     document.querySelectorAll('.row-check').forEach(function(cb){ cb.checked = false; });
     ['select-all-desktop','select-all-mobile'].forEach(function(id){
@@ -329,30 +370,25 @@ function clearSelection() {
     });
     updateBulkBar(0);
 }
-
 function updateBulkBar(count) {
-    var bar    = document.getElementById('bulk-bar');
-    var countEl = document.getElementById('bulk-count');
-    var plural  = document.getElementById('bulk-plural');
-    countEl.textContent = count;
-    plural.textContent  = count === 1 ? '' : 's';
-    if (count > 0) { bar.classList.remove('hidden'); bar.classList.add('flex'); }
-    else           { bar.classList.add('hidden');    bar.classList.remove('flex'); }
+    var bar = document.getElementById('bulk-bar');
+    document.getElementById('bulk-count').textContent = count;
+    document.getElementById('bulk-plural').textContent = count===1?'':'s';
+    if(count>0){ bar.classList.remove('hidden'); bar.classList.add('flex'); }
+    else        { bar.classList.add('hidden');    bar.classList.remove('flex'); }
 }
-
 function applyBulk() {
     var status = document.getElementById('bulk-status-select').value;
-    if (!status) { alert('Please choose a status before applying.'); return; }
+    if(!status){ alert('Please choose a status.'); return; }
     var ids = getChecked().map(function(cb){ return cb.value; });
-    if (!ids.length) { alert('No orders selected.'); return; }
-
+    if(!ids.length){ alert('No orders selected.'); return; }
     document.getElementById('bulk-status-input').value = status;
-    var container = document.getElementById('bulk-ids-container');
-    container.innerHTML = '';
-    ids.forEach(function(id) {
+    var c = document.getElementById('bulk-ids-container');
+    c.innerHTML = '';
+    ids.forEach(function(id){
         var inp = document.createElement('input');
-        inp.type = 'hidden'; inp.name = 'order_ids[]'; inp.value = id;
-        container.appendChild(inp);
+        inp.type='hidden'; inp.name='order_ids[]'; inp.value=id;
+        c.appendChild(inp);
     });
     document.getElementById('bulk-form').submit();
 }

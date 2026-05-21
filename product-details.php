@@ -234,8 +234,8 @@ if (!$product) {
                                             ৳ <?= number_format($relatedProduct['price']) ?>
                                         </span>
                                     </div>
-                                    <button type="button" onclick="addToCart('<?= htmlspecialchars($relatedProduct['id'], ENT_QUOTES) ?>', '<?= htmlspecialchars($relatedProduct['name'], ENT_QUOTES) ?>', <?= $relatedProduct['price'] ?>, '<?= htmlspecialchars($relatedProduct['image_url'], ENT_QUOTES) ?>')" class="w-full bg-white border-2 border-[#cc0000] text-[#cc0000] hover:bg-[#cc0000] hover:text-white py-2.5 rounded-lg flex items-center justify-center gap-2 text-sm font-bold transition-all duration-300">
-                                        <i class="fas fa-shopping-basket"></i> Add to Cart
+                                    <button type="button" onclick="addToCart('<?= htmlspecialchars($relatedProduct['id'], ENT_QUOTES) ?>', '<?= htmlspecialchars($relatedProduct['name'], ENT_QUOTES) ?>', <?= $relatedProduct['price'] ?>, '<?= htmlspecialchars($relatedProduct['image_url'], ENT_QUOTES) ?>', 1, true)" class="w-full bg-[#cc0000] hover:bg-red-800 text-white py-2.5 rounded-lg flex items-center justify-center gap-2 text-sm font-bold transition-all duration-300">
+                                        <i class="fas fa-shopping-basket"></i> অর্ডার করুন
                                     </button>
                                 </div>
                             </div>

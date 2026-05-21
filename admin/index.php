@@ -13,6 +13,7 @@ $pendingOrders    = 0;
 $processingOrders = 0;
 $completedOrders  = 0;
 $cancelledOrders  = 0;
+$holdOrders       = 0;
 $landingOrders    = 0;
 $todayStr         = date('Y-m-d');
 $todayOrders      = 0;
@@ -23,6 +24,7 @@ foreach ($orders as $order) {
     if ($status === 'Processing') $processingOrders++;
     if ($status === 'Completed')  { $completedOrders++; $totalRevenue += (int)($order['total'] ?? 0); }
     if ($status === 'Cancelled')  $cancelledOrders++;
+    if ($status === 'Hold')       $holdOrders++;
     if (($order['source'] ?? '') === 'landing_page') $landingOrders++;
     if (str_starts_with($order['date'] ?? '', $todayStr)) $todayOrders++;
 }
@@ -46,16 +48,17 @@ include 'includes/header.php';
     <div class="grid grid-cols-2 gap-3 mb-5">
         <?php
         $tiles = [
-            ['label'=>'ALL ORDERS',  'count'=>$totalOrders,      'active'=>true],
-            ['label'=>'TODAY',       'count'=>$todayOrders,       'active'=>false],
-            ['label'=>'PENDING',     'count'=>$pendingOrders,     'active'=>false],
-            ['label'=>'PROCESSING',  'count'=>$processingOrders,  'active'=>false],
-            ['label'=>'COMPLETED',   'count'=>$completedOrders,   'active'=>false],
-            ['label'=>'CANCELLED',   'count'=>$cancelledOrders,   'active'=>false],
+            ['label'=>'ALL ORDERS',  'count'=>$totalOrders,      'active'=>true,  'href'=>'orders.php'],
+            ['label'=>'TODAY',       'count'=>$todayOrders,       'active'=>false, 'href'=>'orders.php?date_from='.date('Y-m-d').'&date_to='.date('Y-m-d')],
+            ['label'=>'PENDING',     'count'=>$pendingOrders,     'active'=>false, 'href'=>'orders.php?status=Pending'],
+            ['label'=>'ON HOLD',     'count'=>$holdOrders,        'active'=>false, 'href'=>'orders.php?status=Hold'],
+            ['label'=>'PROCESSING',  'count'=>$processingOrders,  'active'=>false, 'href'=>'orders.php?status=Processing'],
+            ['label'=>'COMPLETED',   'count'=>$completedOrders,   'active'=>false, 'href'=>'orders.php?status=Completed'],
+            ['label'=>'CANCELLED',   'count'=>$cancelledOrders,   'active'=>false, 'href'=>'orders.php?status=Cancelled'],
         ];
         foreach ($tiles as $tile):
         ?>
-        <a href="orders.php"
+        <a href="<?= $tile['href'] ?>"
            class="<?= $tile['active'] ? 'bg-teal-50 border-teal-200' : 'bg-white border-gray-100' ?> rounded-xl border shadow-sm p-4 text-center active:scale-95 transition-transform block">
             <div class="text-3xl font-black text-teal-600 leading-none mb-1.5"><?= $tile['count'] ?></div>
             <div class="text-[11px] font-bold text-gray-500 uppercase tracking-wide"><?= $tile['label'] ?></div>
@@ -209,10 +212,11 @@ include 'includes/header.php';
         <h3 class="font-bold text-gray-800 mb-4 flex items-center gap-2"><i class="fas fa-chart-pie text-gray-400 text-sm"></i> Order Status</h3>
         <?php
         $statusData = [
-            ['label'=>'Pending',    'count'=>$pendingOrders,    'color'=>'bg-orange-400','text'=>'text-orange-700'],
-            ['label'=>'Processing', 'count'=>$processingOrders, 'color'=>'bg-blue-400',  'text'=>'text-blue-700'],
-            ['label'=>'Completed',  'count'=>$completedOrders,  'color'=>'bg-green-400', 'text'=>'text-green-700'],
-            ['label'=>'Cancelled',  'count'=>$cancelledOrders,  'color'=>'bg-red-400',   'text'=>'text-red-700'],
+            ['label'=>'Pending',    'count'=>$pendingOrders,    'color'=>'bg-orange-400', 'text'=>'text-orange-700'],
+            ['label'=>'Processing', 'count'=>$processingOrders, 'color'=>'bg-blue-400',   'text'=>'text-blue-700'],
+            ['label'=>'Hold',       'count'=>$holdOrders,       'color'=>'bg-yellow-400', 'text'=>'text-yellow-700'],
+            ['label'=>'Completed',  'count'=>$completedOrders,  'color'=>'bg-green-400',  'text'=>'text-green-700'],
+            ['label'=>'Cancelled',  'count'=>$cancelledOrders,  'color'=>'bg-red-400',    'text'=>'text-red-700'],
         ];
         foreach ($statusData as $s):
             $pct = $totalOrders > 0 ? round(($s['count']/$totalOrders)*100) : 0;

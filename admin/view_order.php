@@ -149,6 +149,7 @@ $sc = $statusColors[$order['status'] ?? ''] ?? 'bg-gray-100 text-gray-700 border
                             class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white">
                         <option value="Pending"    <?= $order['status']==='Pending'    ?'selected':'' ?>>Pending</option>
                         <option value="Processing" <?= $order['status']==='Processing' ?'selected':'' ?>>Processing</option>
+                        <option value="Hold"       <?= $order['status']==='Hold'       ?'selected':'' ?>>Hold</option>
                         <option value="Completed"  <?= $order['status']==='Completed'  ?'selected':'' ?>>Completed</option>
                         <option value="Cancelled"  <?= $order['status']==='Cancelled'  ?'selected':'' ?>>Cancelled</option>
                     </select>
