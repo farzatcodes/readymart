@@ -1,11 +1,16 @@
 <?php
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $ordersFile = 'orders.json';
-    $orders = [];
-    
-    if (file_exists($ordersFile)) {
-        $orders = json_decode(file_get_contents($ordersFile), true);
+
+    // Open with exclusive lock to prevent concurrent writes losing orders
+    $fp = fopen($ordersFile, 'c+');
+    if (!$fp) {
+        header("Location: checkout.php?error=server");
+        exit;
     }
+    flock($fp, LOCK_EX);
+    $raw    = stream_get_contents($fp);
+    $orders = json_decode($raw, true) ?: [];
 
     // Support both landing page field names (billing_*) and checkout page (customer_*)
     $customer_name    = htmlspecialchars($_POST['billing_name']    ?? $_POST['customer_name']    ?? '');
@@ -67,9 +72,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // Add new order to the top of the array
     array_unshift($orders, $newOrder);
-    
-    // Save to JSON
-    file_put_contents($ordersFile, json_encode($orders, JSON_PRETTY_PRINT));
+
+    // Write atomically inside the lock, then release
+    $json = json_encode($orders, JSON_PRETTY_PRINT);
+    ftruncate($fp, 0);
+    rewind($fp);
+    fwrite($fp, $json);
+    fflush($fp);
+    flock($fp, LOCK_UN);
+    fclose($fp);
 
     // Push notification to admin devices
     require_once __DIR__ . '/includes/fcm.php';

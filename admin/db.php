@@ -26,10 +26,16 @@ try {
     $stmt = $pdo->query("SELECT COUNT(*) FROM `admins`");
     if ($stmt->fetchColumn() == 0) {
         $defaultUser = 'admin';
-        $defaultPass = password_hash('admin123', PASSWORD_DEFAULT);
-        
+        $randomPass  = bin2hex(random_bytes(8)); // 16-char random hex password
+        $defaultPass = password_hash($randomPass, PASSWORD_DEFAULT);
+
         $insertStmt = $pdo->prepare("INSERT INTO `admins` (`username`, `password`) VALUES (?, ?)");
         $insertStmt->execute([$defaultUser, $defaultPass]);
+
+        // Write one-time credential hint — delete this file after first login
+        $credFile = dirname(__DIR__) . '/.admin_initial_password';
+        file_put_contents($credFile, "username: admin\npassword: $randomPass\n(delete this file after logging in)\n");
+        @chmod($credFile, 0600);
     }
 
 } catch(PDOException $e) {
