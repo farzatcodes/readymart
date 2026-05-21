@@ -435,14 +435,14 @@ $siteSettings = file_exists($settingsFile) ? json_decode(file_get_contents($sett
             if (packages.length > 0) {
                 const pkg = packages[selectedPkgIdx];
                 return [{
-                    id:       productId,
-                    name:     productName + (pkg.label ? ' (' + pkg.label + ')' : ''),
-                    price:    pkg.price,
-                    image:    productImage,
-                    quantity: pkg.quantity
+                    id:    productId,
+                    name:  productName + (pkg.label ? ' (' + pkg.label + ')' : ''),
+                    price: pkg.price,
+                    image: productImage,
+                    qty:   pkg.quantity
                 }];
             }
-            return [{ id: productId, name: productName, price: productPrice, image: productImage, quantity: 1 }];
+            return [{ id: productId, name: productName, price: productPrice, image: productImage, qty: 1 }];
         }
 
         function updateTotal() {

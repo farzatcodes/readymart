@@ -1,4 +1,8 @@
 <?php
+// Bug #16: bootstrap session + helpers before header.php is loaded
+if (session_status() === PHP_SESSION_NONE) session_start();
+require_once __DIR__ . '/includes/functions.php';
+
 $jsonFile = '../orders.json';
 $orders   = file_exists($jsonFile) ? json_decode(file_get_contents($jsonFile), true) ?? [] : [];
 
@@ -9,6 +13,7 @@ $validStatuses = ['Pending', 'Processing', 'Completed', 'Cancelled', 'Hold'];
 
 // ── Bulk status update ──────────────────────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['bulk_status'], $_POST['order_ids'])) {
+    csrf_verify(); // Bug #16
     $newStatus   = $_POST['bulk_status'];
     $selectedIds = (array)$_POST['order_ids'];
 
@@ -31,9 +36,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['bulk_status'], $_POST
 }
 
 // ── Date / status filters ───────────────────────────────────────────────────
-$filterDateFrom = trim($_GET['date_from'] ?? '');
-$filterDateTo   = trim($_GET['date_to']   ?? '');
-$filterStatus   = trim($_GET['status']    ?? '');
+// Bug #12: validate date strings to prevent arbitrary string injection
+$rawFrom = trim($_GET['date_from'] ?? '');
+$rawTo   = trim($_GET['date_to']   ?? '');
+$filterDateFrom = (DateTime::createFromFormat('Y-m-d', $rawFrom) !== false) ? $rawFrom : '';
+$filterDateTo   = (DateTime::createFromFormat('Y-m-d', $rawTo)   !== false) ? $rawTo   : '';
+$filterStatus   = trim($_GET['status'] ?? '');
 
 $ordersDisplay = array_reverse($orders);
 
@@ -141,6 +149,7 @@ include 'includes/header.php';
 
 <!-- Hidden bulk-submit form -->
 <form id="bulk-form" method="POST" action="orders.php">
+    <?= csrf_field() ?>
     <input type="hidden" name="bulk_status" id="bulk-status-input">
     <div id="bulk-ids-container"></div>
 </form>

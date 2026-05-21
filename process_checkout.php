@@ -1,4 +1,6 @@
 <?php
+ob_start(); // Bug #9: buffer any stray output so header() always works
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $ordersFile = 'orders.json';
 
@@ -20,7 +22,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // Support landing page delivery_zone (text) and checkout shipping_area (integer)
     if (isset($_POST['delivery_zone'])) {
-        $shipping_cost = $_POST['delivery_zone'] === 'inside_dhaka' ? 60 : 120;
+        $zone = $_POST['delivery_zone']; // Bug #5: validate delivery_zone
+        $shipping_cost = $zone === 'inside_dhaka' ? 60 : 120; // only two valid values
         $order_source = 'landing_page';
     } else {
         $shipping_cost = isset($_POST['shipping_area']) ? (int)$_POST['shipping_area'] : 150;
@@ -91,10 +94,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ['order_id' => $newOrder['id'], 'url' => '/admin/view_order.php?id=' . $newOrder['id']]
     );
 
-    // Redirect to success
+    // Redirect to success (ob_end_clean discards any stray output from FCM)
+    ob_end_clean();
     header("Location: checkout_success.php?order_id=" . $newOrder['id']);
     exit;
 } else {
+    ob_end_clean();
     header("Location: checkout.php");
     exit;
 }

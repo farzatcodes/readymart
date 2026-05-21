@@ -4,7 +4,7 @@ include_once 'includes/header.php';
 $jsonFile = 'products.json';
 $products = [];
 $searchResults = [];
-$searchQuery = isset($_GET['q']) ? trim($_GET['q']) : '';
+$searchQuery = mb_substr(trim($_GET['q'] ?? ''), 0, 100); // Bug #3: cap length
 
 if (file_exists($jsonFile)) {
     $jsonData = file_get_contents($jsonFile);

@@ -33,7 +33,8 @@ if (!$productToEdit) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    
+    csrf_verify(); // Bug #16
+
     $folderName = createSlug($_POST['name']);
     $uploadDir = '../assets/products/' . $folderName . '/';
     $jsonPathPrefix = '/assets/products/' . $folderName . '/';
@@ -81,17 +82,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    // Update the array
-    $products[$productIndex]['name'] = $_POST['name'];
-    $products[$productIndex]['category'] = $_POST['category'];
-    $products[$productIndex]['price'] = $_POST['price'];
-    $products[$productIndex]['old_price'] = empty($_POST['old_price']) ? null : $_POST['old_price'];
-    $products[$productIndex]['image_url'] = $mainImageUrl;
-    $products[$productIndex]['gallery'] = $galleryUrls;
+    // Bug #1: atomic locked write for products.json
+    $fp = fopen($jsonFile, 'c+');
+    flock($fp, LOCK_EX);
+    $products = json_decode(stream_get_contents($fp), true) ?: [];
+
+    // Re-find the index after re-reading (concurrent edit guard)
+    foreach ($products as $i => $p) {
+        if ($p['id'] === $idToEdit) { $productIndex = $i; break; }
+    }
+
+    $products[$productIndex]['name']        = $_POST['name'];
+    $products[$productIndex]['category']    = $_POST['category'];
+    $products[$productIndex]['price']       = $_POST['price'];
+    $products[$productIndex]['old_price']   = empty($_POST['old_price']) ? null : $_POST['old_price'];
+    $products[$productIndex]['image_url']   = $mainImageUrl;
+    $products[$productIndex]['gallery']     = $galleryUrls;
     $products[$productIndex]['description'] = $_POST['description'];
-    
-    file_put_contents($jsonFile, json_encode($products, JSON_PRETTY_PRINT));
-    
+
+    $json = json_encode($products, JSON_PRETTY_PRINT);
+    ftruncate($fp, 0);
+    rewind($fp);
+    fwrite($fp, $json);
+    fflush($fp);
+    flock($fp, LOCK_UN);
+    fclose($fp);
+
     header('Location: products.php');
     exit;
 }
@@ -103,6 +119,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </div>
 
 <form method="POST" enctype="multipart/form-data" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <?= csrf_field() ?>
     <div class="col-span-2 space-y-4">
         <div class="wp-card p-4">
             <div class="mb-4">
