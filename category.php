@@ -77,11 +77,8 @@ include 'includes/header.php';
                                     <span class="text-gray-400 text-sm line-through decoration-gray-400">৳ <?php echo $old_price; ?></span>
                                 <?php endif; ?>
                             </div>
-                            <button onclick="addToCartGlobal({id: '<?php echo $id; ?>', name: '<?php echo addslashes($name); ?>', price: <?php echo $price; ?>, image: '<?php echo $image_url; ?>'})" class="w-full bg-[#c8102e] text-white py-2 rounded font-medium hover:bg-[#a00c24] hover:shadow-md transition-all active:scale-[0.98] flex justify-center items-center gap-2 text-sm">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
-                                </svg>
-                                Add to Cart
+                            <button onclick="addToCart('<?php echo htmlspecialchars($id, ENT_QUOTES); ?>', '<?php echo addslashes($name); ?>', <?php echo $price; ?>, '<?php echo htmlspecialchars($image_url, ENT_QUOTES); ?>', 1, true)" class="w-full bg-[#c8102e] text-white py-2 rounded font-medium hover:bg-[#a00c24] hover:shadow-md transition-all active:scale-[0.98] flex justify-center items-center gap-2 text-sm">
+                                <i class="fas fa-shopping-basket"></i> অর্ডার করুন
                             </button>
                         </div>
                     </div>

@@ -38,29 +38,36 @@ public class MainActivity extends AppCompatActivity {
 
         webView.setWebChromeClient(new WebChromeClient());
         webView.setWebViewClient(new WebViewClient() {
+
+            // Called on API 24+ — override both to cover all WebView versions
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
-                Uri uri = request.getUrl();
-                String scheme = uri.getScheme();
-                if (scheme == null) return false;
+                return handleUrl(request.getUrl().toString());
+            }
 
-                switch (scheme) {
-                    case "tel":
-                    case "mailto":
-                    case "whatsapp":
-                    case "sms":
-                    case "intent":
-                        try {
-                            Intent intent = new Intent(Intent.ACTION_VIEW, uri);
-                            if (intent.resolveActivity(getPackageManager()) != null) {
-                                startActivity(intent);
-                            }
-                        } catch (Exception ignored) {}
-                        return true;   // consumed — don't load in WebView
+            // Called on older WebView / some schemes that bypass the new API
+            @SuppressWarnings("deprecation")
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                return handleUrl(url);
+            }
 
-                    default:
-                        return false;  // let WebView handle http/https
+            private boolean handleUrl(String url) {
+                if (url == null) return false;
+                if (url.startsWith("tel:")
+                        || url.startsWith("mailto:")
+                        || url.startsWith("sms:")
+                        || url.startsWith("smsto:")
+                        || url.startsWith("whatsapp:")
+                        || url.startsWith("intent:")) {
+                    try {
+                        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        startActivity(intent);
+                    } catch (Exception ignored) {}
+                    return true; // consumed — do NOT load in WebView
                 }
+                return false; // let WebView handle http / https normally
             }
         });
 
