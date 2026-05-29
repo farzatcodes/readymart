@@ -1,3 +1,6 @@
 # FCM private key — never commit
 fcm_service_account.json
 .fcm_token_cache
+
+# One-time admin setup credential file
+.admin_initial_password

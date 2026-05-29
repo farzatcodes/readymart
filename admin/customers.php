@@ -16,8 +16,13 @@ foreach ($orders as $order) {
 
     if ($phone === '') continue;
 
-    if (!isset($customerMap[$phone])) {
-        $customerMap[$phone] = [
+    // Bug #13: normalize phone to +880 form so variants of the same
+    // number (01XXXXXXXXX vs +8801XXXXXXXXX) don't create duplicate entries
+    $normalizedPhone = bd_tel($phone);
+    $key = $normalizedPhone ?: $phone;
+
+    if (!isset($customerMap[$key])) {
+        $customerMap[$key] = [
             'phone'       => $phone,
             'name'        => $name,
             'address'     => $address,
@@ -27,13 +32,13 @@ foreach ($orders as $order) {
             'last_status' => $status,
         ];
     }
-    $customerMap[$phone]['orders']++;
-    $customerMap[$phone]['spent'] += $total;
-    if ($date > $customerMap[$phone]['last_order']) {
-        $customerMap[$phone]['last_order']  = $date;
-        $customerMap[$phone]['last_status'] = $status;
-        $customerMap[$phone]['name']        = $name ?: $customerMap[$phone]['name'];
-        $customerMap[$phone]['address']     = $address ?: $customerMap[$phone]['address'];
+    $customerMap[$key]['orders']++;
+    $customerMap[$key]['spent'] += $total;
+    if ($date > $customerMap[$key]['last_order']) {
+        $customerMap[$key]['last_order']  = $date;
+        $customerMap[$key]['last_status'] = $status;
+        $customerMap[$key]['name']        = $name ?: $customerMap[$key]['name'];
+        $customerMap[$key]['address']     = $address ?: $customerMap[$key]['address'];
     }
 }
 

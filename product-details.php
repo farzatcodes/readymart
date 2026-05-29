@@ -119,8 +119,8 @@ if (!$product) {
                     </button>
 
                     <!-- Add to Cart Button (Adds to cart silently) -->
-                    <button type="button" onclick="addToCart('<?= htmlspecialchars($product['id'], ENT_QUOTES) ?>', '<?= htmlspecialchars($product['name'], ENT_QUOTES) ?>', <?= $product['price'] ?>, '<?= htmlspecialchars($product['image_url'], ENT_QUOTES) ?>')" class="w-full bg-[#111] hover:bg-gray-800 text-white py-3 px-4 rounded-lg flex items-center justify-center gap-2 text-[16px] font-bold transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 bengali-text cursor-pointer">
-                        <i class="fas fa-shopping-cart"></i> কার্টে যোগ করুন
+                    <button type="button" onclick="addToCart('<?= htmlspecialchars($product['id'], ENT_QUOTES) ?>', '<?= htmlspecialchars($product['name'], ENT_QUOTES) ?>', <?= $product['price'] ?>, '<?= htmlspecialchars($product['image_url'], ENT_QUOTES) ?>', 1, true)" class="w-full bg-[#111] hover:bg-gray-800 text-white py-3 px-4 rounded-lg flex items-center justify-center gap-2 text-[16px] font-bold transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 bengali-text cursor-pointer">
+                        <i class="fas fa-shopping-basket"></i> অর্ডার করুন
                     </button>
                     
                     <div class="grid grid-cols-2 gap-3">

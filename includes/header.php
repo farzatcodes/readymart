@@ -1,10 +1,19 @@
+<?php
+// Load pixel/tracking settings — skip if already loaded by the calling page
+if (!isset($siteSettings)) {
+    $settingsFile = __DIR__ . '/../settings.json';
+    $siteSettings = file_exists($settingsFile)
+        ? (json_decode(file_get_contents($settingsFile), true) ?? [])
+        : [];
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ReadyMart - Trusted Online Shop</title>
-    
+
     <!-- Resource hints -->
     <link rel="preload" href="/assets/css/output.css" as="style">
     <link rel="preload" href="/font/HindSiliguri-Regular.ttf" as="font" type="font/ttf" crossorigin>
@@ -15,8 +24,18 @@
     <!-- Font Awesome: load non-blocking to avoid render delay -->
     <link rel="preload" href="/assets/fontawesome/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <noscript><link rel="stylesheet" href="/assets/fontawesome/css/all.min.css"></noscript>
+
+    <?php if (!empty($siteSettings['pixel_head'])): ?>
+    <!-- @head pixel -->
+    <?php echo $siteSettings['pixel_head']; ?>
+    <?php endif; ?>
 </head>
 <body class="bg-white">
+
+<?php if (!empty($siteSettings['pixel_body'])): ?>
+<!-- @body pixel -->
+<?php echo $siteSettings['pixel_body']; ?>
+<?php endif; ?>
 
 <!-- Top Notification Ticker -->
 <div class="bg-brand-red text-white py-1 border-b border-red-800 w-full overflow-hidden">

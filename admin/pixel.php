@@ -7,6 +7,7 @@ $settings = file_exists($settingsFile) ? json_decode(file_get_contents($settings
 $success = $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_pixels'])) {
+    csrf_verify(); // Bug #16
     $settings['pixel_head']     = $_POST['pixel_head']     ?? '';
     $settings['pixel_body']     = $_POST['pixel_body']     ?? '';
     $settings['pixel_purchase'] = $_POST['pixel_purchase'] ?? '';
@@ -43,6 +44,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_pixels'])) {
 </div>
 
 <form method="POST">
+    <?= csrf_field() ?>
     <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
         <div class="px-5 py-4 border-b border-gray-100 bg-gray-50 flex items-center gap-3">
             <div class="w-9 h-9 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center flex-shrink-0">

@@ -219,8 +219,8 @@
             total += item.price * item.qty;
         });
         
-        const countEl = document.getElementById('header_cart_count');
-        const totalEl = document.getElementById('header_cart_total');
+        const countEl = document.getElementById('headerCartCount');
+        const totalEl = document.getElementById('headerCartTotal');
         
         if (countEl) countEl.innerText = count;
         if (totalEl) totalEl.innerText = total + ' TK';

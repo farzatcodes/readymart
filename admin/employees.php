@@ -6,6 +6,11 @@ $employees = file_exists($empFile) ? json_decode(file_get_contents($empFile), tr
 
 $flash = $flashType = '';
 
+// Bug #16: verify CSRF on all POST actions
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    csrf_verify();
+}
+
 // ── Add employee ───────────────────────────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'add') {
     $name     = trim($_POST['name']     ?? '');
@@ -67,6 +72,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 
 $roles = ['admin'=>'Admin','manager'=>'Manager','staff'=>'Staff'];
 $roleColors = ['admin'=>'bg-red-100 text-red-700','manager'=>'bg-purple-100 text-purple-700','staff'=>'bg-blue-100 text-blue-700'];
+
+// Bug #7: strip password hashes from display data — never render to HTML
+$displayEmployees = array_map(function($e) { unset($e['password']); return $e; }, $employees);
 ?>
 
 <div class="mb-5 flex items-center justify-between">
@@ -114,7 +122,7 @@ $roleColors = ['admin'=>'bg-red-100 text-red-700','manager'=>'bg-purple-100 text
             </tr>
         </thead>
         <tbody>
-        <?php foreach ($employees as $emp): ?>
+        <?php foreach ($displayEmployees as $emp): ?>
         <tr class="border-b border-gray-50 hover:bg-gray-50 transition">
             <td class="px-5 py-3.5">
                 <div class="flex items-center gap-3">
@@ -142,6 +150,7 @@ $roleColors = ['admin'=>'bg-red-100 text-red-700','manager'=>'bg-purple-100 text
                 <form method="POST" class="inline">
                     <input type="hidden" name="action"  value="toggle">
                     <input type="hidden" name="emp_id"  value="<?= htmlspecialchars($emp['id']) ?>">
+                    <?= csrf_field() ?>
                     <button type="submit"
                         class="<?= $emp['status']==='active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500' ?> px-2.5 py-1 rounded-full text-xs font-bold border <?= $emp['status']==='active' ? 'border-green-200' : 'border-gray-200' ?> hover:opacity-75 transition">
                         <?= $emp['status'] === 'active' ? '● Active' : '○ Inactive' ?>
@@ -152,6 +161,7 @@ $roleColors = ['admin'=>'bg-red-100 text-red-700','manager'=>'bg-purple-100 text
                 <form method="POST" onsubmit="return confirm('Remove this employee?')" class="inline">
                     <input type="hidden" name="action" value="delete">
                     <input type="hidden" name="emp_id" value="<?= htmlspecialchars($emp['id']) ?>">
+                    <?= csrf_field() ?>
                     <button type="submit" class="text-xs font-bold text-red-500 hover:text-red-700 transition">
                         <i class="fas fa-trash-alt"></i>
                     </button>
@@ -225,6 +235,7 @@ $roleColors = ['admin'=>'bg-red-100 text-red-700','manager'=>'bg-purple-100 text
         </div>
         <form method="POST" class="p-5 space-y-4">
             <input type="hidden" name="action" value="add">
+            <?= csrf_field() ?>
 
             <div>
                 <label class="block text-xs font-bold text-gray-600 mb-1.5 uppercase tracking-wide">Full Name *</label>

@@ -14,8 +14,25 @@ function createSlug($text) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $products = file_exists($jsonFile) ? json_decode(file_get_contents($jsonFile), true) : [];
-    
+    csrf_verify(); // Bug #16
+
+    // Bug #1: open with exclusive lock for safe concurrent writes
+    $fp = fopen($jsonFile, 'c+');
+    flock($fp, LOCK_EX);
+    $products = json_decode(stream_get_contents($fp), true) ?: [];
+
+    // Bug #8: reject duplicate product IDs
+    $newId = trim($_POST['id'] ?? '');
+    foreach ($products as $p) {
+        if ($p['id'] === $newId) {
+            flock($fp, LOCK_UN);
+            fclose($fp);
+            $dupError = 'Product ID "' . htmlspecialchars($newId) . '" already exists. Choose a unique ID.';
+            // fall through to re-render the form with error
+            goto render_form;
+        }
+    }
+
     $folderName = createSlug($_POST['name']);
     $uploadDir = '../assets/products/' . $folderName . '/';
     $jsonPathPrefix = '/assets/products/' . $folderName . '/';
@@ -71,11 +88,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     ];
     
     $products[] = $newProduct;
-    file_put_contents($jsonFile, json_encode($products, JSON_PRETTY_PRINT));
-    
+
+    // Write back under the same lock (Bug #1)
+    $json = json_encode($products, JSON_PRETTY_PRINT);
+    ftruncate($fp, 0);
+    rewind($fp);
+    fwrite($fp, $json);
+    fflush($fp);
+    flock($fp, LOCK_UN);
+    fclose($fp);
+
     header('Location: products.php');
     exit;
 }
+
+render_form:
 ?>
 
 <div class="mb-4 flex items-center gap-3">
@@ -83,7 +110,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <h1 class="text-2xl font-normal text-[#1d2327]">Add New Product</h1>
 </div>
 
+<?php if (!empty($dupError)): ?>
+<div class="mb-4 bg-red-50 border-l-4 border-red-500 text-red-800 text-sm font-medium px-4 py-3 rounded-lg">
+    <i class="fas fa-exclamation-circle mr-1.5"></i><?= $dupError ?>
+</div>
+<?php endif; ?>
+
 <form method="POST" enctype="multipart/form-data" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <?= csrf_field() ?>
     <div class="col-span-2 space-y-4">
         <div class="wp-card p-4">
             <div class="mb-4">

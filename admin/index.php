@@ -31,6 +31,16 @@ foreach ($orders as $order) {
 
 $recentOrders = array_slice(array_reverse($orders), 0, 8);
 
+$tiles = [
+    ['label'=>'ALL ORDERS',  'count'=>$totalOrders,      'color'=>'text-teal-600',   'active'=>true,  'href'=>'orders.php'],
+    ['label'=>'TODAY',       'count'=>$todayOrders,       'color'=>'text-blue-600',   'active'=>false, 'href'=>'orders.php?date_from='.date('Y-m-d').'&date_to='.date('Y-m-d')],
+    ['label'=>'PENDING',     'count'=>$pendingOrders,     'color'=>'text-orange-500', 'active'=>false, 'href'=>'orders.php?status=Pending'],
+    ['label'=>'ON HOLD',     'count'=>$holdOrders,        'color'=>'text-yellow-600', 'active'=>false, 'href'=>'orders.php?status=Hold'],
+    ['label'=>'PROCESSING',  'count'=>$processingOrders,  'color'=>'text-blue-500',   'active'=>false, 'href'=>'orders.php?status=Processing'],
+    ['label'=>'COMPLETED',   'count'=>$completedOrders,   'color'=>'text-green-600',  'active'=>false, 'href'=>'orders.php?status=Completed'],
+    ['label'=>'CANCELLED',   'count'=>$cancelledOrders,   'color'=>'text-red-500',    'active'=>false, 'href'=>'orders.php?status=Cancelled'],
+];
+
 include 'includes/header.php';
 ?>
 
@@ -46,21 +56,10 @@ include 'includes/header.php';
 
     <!-- Status tile grid -->
     <div class="grid grid-cols-2 gap-3 mb-5">
-        <?php
-        $tiles = [
-            ['label'=>'ALL ORDERS',  'count'=>$totalOrders,      'active'=>true,  'href'=>'orders.php'],
-            ['label'=>'TODAY',       'count'=>$todayOrders,       'active'=>false, 'href'=>'orders.php?date_from='.date('Y-m-d').'&date_to='.date('Y-m-d')],
-            ['label'=>'PENDING',     'count'=>$pendingOrders,     'active'=>false, 'href'=>'orders.php?status=Pending'],
-            ['label'=>'ON HOLD',     'count'=>$holdOrders,        'active'=>false, 'href'=>'orders.php?status=Hold'],
-            ['label'=>'PROCESSING',  'count'=>$processingOrders,  'active'=>false, 'href'=>'orders.php?status=Processing'],
-            ['label'=>'COMPLETED',   'count'=>$completedOrders,   'active'=>false, 'href'=>'orders.php?status=Completed'],
-            ['label'=>'CANCELLED',   'count'=>$cancelledOrders,   'active'=>false, 'href'=>'orders.php?status=Cancelled'],
-        ];
-        foreach ($tiles as $tile):
-        ?>
+        <?php foreach ($tiles as $tile): ?>
         <a href="<?= $tile['href'] ?>"
            class="<?= $tile['active'] ? 'bg-teal-50 border-teal-200' : 'bg-white border-gray-100' ?> rounded-xl border shadow-sm p-4 text-center active:scale-95 transition-transform block">
-            <div class="text-3xl font-black text-teal-600 leading-none mb-1.5"><?= $tile['count'] ?></div>
+            <div class="text-3xl font-black <?= $tile['color'] ?> leading-none mb-1.5"><?= $tile['count'] ?></div>
             <div class="text-[11px] font-bold text-gray-500 uppercase tracking-wide"><?= $tile['label'] ?></div>
         </a>
         <?php endforeach; ?>
@@ -166,44 +165,25 @@ include 'includes/header.php';
     </div>
 </div>
 
-<!-- Primary Stats Row -->
-<div class="grid grid-cols-4 gap-4 mb-6">
-    <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
-        <div class="flex items-start justify-between mb-3">
-            <div class="w-10 h-10 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center"><i class="fas fa-shopping-bag text-sm"></i></div>
-            <span class="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">All Time</span>
-        </div>
-        <p class="text-2xl font-black text-gray-900"><?= $totalOrders ?></p>
-        <p class="text-sm text-gray-500 font-medium mt-0.5">Total Orders</p>
-        <?php if($landingOrders > 0): ?><p class="text-xs text-blue-500 mt-2 font-bold"><i class="fas fa-rocket mr-1"></i><?= $landingOrders ?> from landing</p><?php endif; ?>
-    </div>
-    <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
-        <div class="flex items-start justify-between mb-3">
-            <div class="w-10 h-10 rounded-lg bg-orange-100 text-orange-600 flex items-center justify-center"><i class="fas fa-clock text-sm"></i></div>
-            <span class="text-xs font-bold text-orange-600 bg-orange-50 px-2 py-0.5 rounded-full">Action Needed</span>
-        </div>
-        <p class="text-2xl font-black text-gray-900"><?= $pendingOrders ?></p>
-        <p class="text-sm text-gray-500 font-medium mt-0.5">Pending Orders</p>
-        <?php if($processingOrders > 0): ?><p class="text-xs text-blue-500 mt-2 font-bold"><i class="fas fa-spinner mr-1"></i><?= $processingOrders ?> processing</p><?php endif; ?>
-    </div>
-    <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
-        <div class="flex items-start justify-between mb-3">
-            <div class="w-10 h-10 rounded-lg bg-green-100 text-green-600 flex items-center justify-center"><i class="fas fa-taka-sign text-sm"></i></div>
-            <span class="text-xs font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded-full">Completed</span>
-        </div>
-        <p class="text-2xl font-black text-gray-900">৳<?= number_format($totalRevenue) ?></p>
-        <p class="text-sm text-gray-500 font-medium mt-0.5">Total Revenue</p>
-        <?php if($completedOrders > 0): ?><p class="text-xs text-green-500 mt-2 font-bold"><i class="fas fa-check mr-1"></i><?= $completedOrders ?> completed</p><?php endif; ?>
-    </div>
-    <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
-        <div class="flex items-start justify-between mb-3">
-            <div class="w-10 h-10 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center"><i class="fas fa-box text-sm"></i></div>
-            <span class="text-xs font-bold text-purple-600 bg-purple-50 px-2 py-0.5 rounded-full">Catalog</span>
-        </div>
-        <p class="text-2xl font-black text-gray-900"><?= count($products) ?></p>
-        <p class="text-sm text-gray-500 font-medium mt-0.5">Total Products</p>
-        <?php if(count($landingPages) > 0): ?><p class="text-xs text-purple-500 mt-2 font-bold"><i class="fas fa-rocket mr-1"></i><?= count($landingPages) ?> landing pages</p><?php endif; ?>
-    </div>
+<!-- Status Tile Grid (mirrors mobile) -->
+<div class="grid grid-cols-4 xl:grid-cols-9 gap-3 mb-6">
+    <?php foreach ($tiles as $tile): ?>
+    <a href="<?= $tile['href'] ?>"
+       class="<?= $tile['active'] ? 'bg-teal-50 border-teal-200' : 'bg-white border-gray-100' ?> rounded-xl border shadow-sm p-4 text-center hover:shadow-md hover:-translate-y-0.5 transition-all block">
+        <div class="text-3xl font-black <?= $tile['color'] ?> leading-none mb-1.5"><?= $tile['count'] ?></div>
+        <div class="text-[11px] font-bold text-gray-500 uppercase tracking-wide"><?= $tile['label'] ?></div>
+    </a>
+    <?php endforeach; ?>
+    <a href="orders.php?status=Completed"
+       class="bg-white border-gray-100 rounded-xl border shadow-sm p-4 text-center hover:shadow-md hover:-translate-y-0.5 transition-all block">
+        <div class="text-2xl font-black text-green-600 leading-none mb-1.5">৳<?= number_format($totalRevenue) ?></div>
+        <div class="text-[11px] font-bold text-gray-500 uppercase tracking-wide">REVENUE</div>
+    </a>
+    <a href="products.php"
+       class="bg-white border-gray-100 rounded-xl border shadow-sm p-4 text-center hover:shadow-md hover:-translate-y-0.5 transition-all block">
+        <div class="text-3xl font-black text-purple-600 leading-none mb-1.5"><?= count($products) ?></div>
+        <div class="text-[11px] font-bold text-gray-500 uppercase tracking-wide">PRODUCTS</div>
+    </a>
 </div>
 
 <!-- Status Breakdown + Quick Actions + Landing Pages -->

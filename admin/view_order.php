@@ -16,6 +16,7 @@ foreach ($orders as $index => $o) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['status']) && $orderIndex !== null) {
+    csrf_verify(); // Bug #16
     $orders[$orderIndex]['status'] = $_POST['status'];
     file_put_contents($ordersFile, json_encode($orders, JSON_PRETTY_PRINT));
     $order   = $orders[$orderIndex];
@@ -145,6 +146,7 @@ $sc = $statusColors[$order['status'] ?? ''] ?? 'bg-gray-100 text-gray-700 border
             </div>
             <div class="px-5 py-4">
                 <form method="POST" class="flex flex-col gap-3">
+                    <?= csrf_field() ?>
                     <select name="status"
                             class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white">
                         <option value="Pending"    <?= $order['status']==='Pending'    ?'selected':'' ?>>Pending</option>

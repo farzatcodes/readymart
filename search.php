@@ -4,7 +4,7 @@ include_once 'includes/header.php';
 $jsonFile = 'products.json';
 $products = [];
 $searchResults = [];
-$searchQuery = isset($_GET['q']) ? trim($_GET['q']) : '';
+$searchQuery = mb_substr(trim($_GET['q'] ?? ''), 0, 100); // Bug #3: cap length
 
 if (file_exists($jsonFile)) {
     $jsonData = file_get_contents($jsonFile);
@@ -48,7 +48,7 @@ if ($searchQuery !== '') {
                                      class="w-full h-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-500">
                             </a>
                             
-                            <?php if (isset($product['old_price']) && $product['old_price'] > $product['price']): ?>
+                            <?php if (!empty($product['old_price']) && (float)$product['old_price'] > 0 && $product['old_price'] > $product['price']): ?>
                                 <?php $discount = round((($product['old_price'] - $product['price']) / $product['old_price']) * 100); ?>
                                 <div class="absolute top-3 left-3 bg-[#cc0000] text-white text-xs font-bold px-2 py-1 rounded shadow-sm">
                                     -<?= $discount ?>%
